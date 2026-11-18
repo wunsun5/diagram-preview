@@ -48,9 +48,10 @@
   .grid-container {
     flex-grow: 1;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    padding: 12px 14px 14px 14px;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px;
+    padding: 10px 14px 12px 14px;
     box-sizing: border-box;
   }
   .card {
@@ -60,10 +61,10 @@
   }
   .card-title {
     text-align: center;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
   }
   .box-wrap {
     flex-grow: 1;
@@ -377,10 +378,10 @@
     fiturList.forEach(col => {
       const s = d[col];
       const range = (s.max - s.min) || 1;
-      const pad = range * 0.08;
+      const pad = range * 0.06;
       const vMin = s.min - pad;
       const vMax = s.max + pad;
-      const scale = v => 18 + ((v - vMin) / (vMax - vMin)) * 184;
+      const scale = v => 20 + ((v - vMin) / (vMax - vMin)) * 260;
 
       const xWmin = scale(s.wmin);
       const xQ1 = scale(s.q1);
@@ -389,23 +390,23 @@
       const xWmax = scale(s.wmax);
 
       let ticksHtml = '';
-      for (let i = 0; i <= 3; i++) {
-        const val = vMin + (i / 3) * (vMax - vMin);
-        const tx = 18 + (i / 3) * 184;
-        ticksHtml += `<line x1="${tx}" y1="145" x2="${tx}" y2="151" stroke="#64748b" stroke-width="1"/>
-                      <text x="${tx}" y="165" font-size="10.5" text-anchor="middle" fill="#334155">${val.toFixed(1)}</text>`;
+      for (let i = 0; i <= 4; i++) {
+        const val = vMin + (i / 4) * (vMax - vMin);
+        const tx = 20 + (i / 4) * 260;
+        ticksHtml += `<line x1="${tx}" y1="112" x2="${tx}" y2="117" stroke="#64748b" stroke-width="1"/>
+                      <text x="${tx}" y="129" font-size="9.5" text-anchor="middle" fill="#334155">${val.toFixed(2)}</text>`;
       }
 
       let gridHtml = '';
-      for (let i = 0; i <= 3; i++) {
-        const tx = 18 + (i / 3) * 184;
-        gridHtml += `<line x1="${tx}" y1="10" x2="${tx}" y2="145" stroke="#e2e8f0" stroke-width="0.8"/>`;
+      for (let i = 0; i <= 4; i++) {
+        const tx = 20 + (i / 4) * 260;
+        gridHtml += `<line x1="${tx}" y1="8" x2="${tx}" y2="112" stroke="#e2e8f0" stroke-width="0.8"/>`;
       }
 
       let outHtml = '';
       s.out.forEach(ov => {
         const ox = scale(ov);
-        outHtml += `<circle cx="${ox}" cy="76" r="2.2" fill="#334155" opacity="0.75"/>`;
+        outHtml += `<circle cx="${ox}" cy="56" r="2.2" fill="#334155" opacity="0.75"/>`;
       });
 
       const card = document.createElement('div');
@@ -413,16 +414,16 @@
       card.innerHTML = `
         <div class="card-title">${col}</div>
         <div class="box-wrap" onmousemove='showTip(event, "${col}", ${JSON.stringify(s)})' onmouseleave="hideTip()">
-          <svg viewBox="0 0 220 175" preserveAspectRatio="none">
+          <svg viewBox="0 0 300 135" preserveAspectRatio="none">
             ${gridHtml}
-            <line x1="${xWmin}" y1="76" x2="${xQ1}" y2="76" stroke="#1e293b" stroke-width="1.3"/>
-            <line x1="${xQ3}" y1="76" x2="${xWmax}" y2="76" stroke="#1e293b" stroke-width="1.3"/>
-            <line x1="${xWmin}" y1="58" x2="${xWmin}" y2="94" stroke="#1e293b" stroke-width="1.3"/>
-            <line x1="${xWmax}" y1="58" x2="${xWmax}" y2="94" stroke="#1e293b" stroke-width="1.3"/>
-            <rect x="${xQ1}" y="34" width="${Math.max(xQ3 - xQ1, 2)}" height="84" fill="#2ca02c" stroke="#14532d" stroke-width="1.2"/>
-            <line x1="${xMed}" y1="34" x2="${xMed}" y2="118" stroke="#14532d" stroke-width="1.8"/>
+            <line x1="${xWmin}" y1="56" x2="${xQ1}" y2="56" stroke="#1e293b" stroke-width="1.3"/>
+            <line x1="${xQ3}" y1="56" x2="${xWmax}" y2="56" stroke="#1e293b" stroke-width="1.3"/>
+            <line x1="${xWmin}" y1="42" x2="${xWmin}" y2="70" stroke="#1e293b" stroke-width="1.3"/>
+            <line x1="${xWmax}" y1="42" x2="${xWmax}" y2="70" stroke="#1e293b" stroke-width="1.3"/>
+            <rect x="${xQ1}" y="22" width="${Math.max(xQ3 - xQ1, 2)}" height="68" fill="#2ca02c" stroke="#14532d" stroke-width="1.2"/>
+            <line x1="${xMed}" y1="22" x2="${xMed}" y2="90" stroke="#14532d" stroke-width="1.8"/>
             ${outHtml}
-            <line x1="0" y1="145" x2="220" y2="145" stroke="#94a3b8" stroke-width="1"/>
+            <line x1="0" y1="112" x2="300" y2="112" stroke="#94a3b8" stroke-width="1"/>
             ${ticksHtml}
           </svg>
         </div>
