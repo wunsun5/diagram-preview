@@ -376,7 +376,7 @@
     tip.style.display = 'block';
     tip.style.left = (e.clientX + 12) + 'px';
     tip.style.top = (e.clientY + 12) + 'px';
-    tip.innerHTML = '<b>K = ' + k + (k === 3 ? ' (Terpilih)' : '') + '</b><br>' + label + ': <b>' + val.toFixed(4) + '</b>';
+    tip.innerHTML = '<b>K = ' + k + '</b><br>' + label + ': <b>' + val.toFixed(4) + '</b>';
   }
 
   function hideTip() {
@@ -417,25 +417,14 @@
       pts.push(px + ',' + py);
 
       grid += '<line x1="' + px + '" y1="' + padT + '" x2="' + px + '" y2="' + (H - padB) + '" stroke="#cbd5e1" stroke-width="0.8"/>';
-
-      const isK3 = (r.k === 3);
-      xLabels += '<text x="' + px + '" y="' + (H - padB + 16) + '" font-size="11" font-weight="' + (isK3 ? '700' : '400') + '" text-anchor="middle" fill="' + (isK3 ? '#b45309' : '#334155') + '">' + r.k + '</text>';
-
-      if (isK3) {
-        nodes += '<circle cx="' + px + '" cy="' + py + '" r="10" fill="none" stroke="#f59e0b" stroke-width="2.2"/>';
-        const tagY = (key === 'sil') ? (py - 15) : (py + 22);
-        nodes += '<rect x="' + (px - 36) + '" y="' + (tagY - 10) + '" width="72" height="14" rx="3" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>';
-        nodes += '<text x="' + px + '" y="' + tagY + '" font-size="9" font-weight="700" text-anchor="middle" fill="#92400e">K=3 (Terpilih)</text>';
-      }
+      xLabels += '<text x="' + px + '" y="' + (H - padB + 16) + '" font-size="11" font-weight="400" text-anchor="middle" fill="#334155">' + r.k + '</text>';
 
       if (isSquare) {
-        const s = isK3 ? 9 : 7.5;
-        const fillC = isK3 ? '#f59e0b' : strokeColor;
-        nodes += '<rect x="' + (px - s/2) + '" y="' + (py - s/2) + '" width="' + s + '" height="' + s + '" fill="' + fillC + '" stroke="#ffffff" stroke-width="1.2" style="cursor:pointer" onmousemove="showTip(event, \'' + yAxisLabel + '\', ' + r.k + ', ' + r[key] + ')" onmouseleave="hideTip()"/>';
+        const s = 7.5;
+        nodes += '<rect x="' + (px - s/2) + '" y="' + (py - s/2) + '" width="' + s + '" height="' + s + '" fill="' + strokeColor + '" stroke="#ffffff" stroke-width="1.2" style="cursor:pointer" onmousemove="showTip(event, \'' + yAxisLabel + '\', ' + r.k + ', ' + r[key] + ')" onmouseleave="hideTip()"/>';
       } else {
-        const rad = isK3 ? 5.5 : 4.2;
-        const fillC = isK3 ? '#f59e0b' : strokeColor;
-        nodes += '<circle cx="' + px + '" cy="' + py + '" r="' + rad + '" fill="' + fillC + '" stroke="#ffffff" stroke-width="1.2" style="cursor:pointer" onmousemove="showTip(event, \'' + yAxisLabel + '\', ' + r.k + ', ' + r[key] + ')" onmouseleave="hideTip()"/>';
+        const rad = 4.5;
+        nodes += '<circle cx="' + px + '" cy="' + py + '" r="' + rad + '" fill="' + strokeColor + '" stroke="#ffffff" stroke-width="1.2" style="cursor:pointer" onmousemove="showTip(event, \'' + yAxisLabel + '\', ' + r.k + ', ' + r[key] + ')" onmouseleave="hideTip()"/>';
       }
     });
 
@@ -457,10 +446,9 @@
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const tr = document.createElement('tr');
-      if (r.k === 3) tr.className = 'row-k3';
 
       const td1 = document.createElement('td');
-      td1.innerHTML = 'K = ' + r.k + (r.k === 3 ? '<span class="badge-k3">Terpilih</span>' : '');
+      td1.textContent = 'K = ' + r.k;
 
       const td2 = document.createElement('td');
       td2.textContent = r.sil.toFixed(4);
