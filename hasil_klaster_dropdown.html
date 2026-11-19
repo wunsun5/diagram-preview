@@ -14,9 +14,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     flex-wrap: wrap; flex-shrink: 0; z-index: 50;
   }
-  .left-controls {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
+  .left-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .dropdown { position: relative; width: 295px; }
   .dd-btn {
     width: 100%; padding: 6px 12px; font-size: 12.5px; font-weight: 600;
@@ -43,22 +41,16 @@
     border-radius: 6px; background-color: #ffffff; color: #0f172a; outline: none;
   }
   .filter-select:focus, .ticker-input:focus { border-color: #2563eb; }
-  .ticker-input { width: 145px; }
+  .ticker-input { width: 150px; }
 
-  .summary-pills {
-    display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
-  }
+  .summary-pills { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; }
   .pill { padding: 4px 8px; border-radius: 4px; }
   .pill-0 { background-color: #dcfce7; color: #14532d; border: 1px solid #86efac; }
   .pill-1 { background-color: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; }
   .pill-2 { background-color: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
 
-  .table-container {
-    flex-grow: 1; overflow-y: auto; overflow-x: auto;
-  }
-  table {
-    width: 100%; border-collapse: collapse; font-size: 12px;
-  }
+  .table-container { flex-grow: 1; overflow-y: auto; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
   thead th {
     position: sticky; top: 0; background-color: #1e3a8a; color: #ffffff;
     padding: 8px 10px; text-align: center; font-weight: 600;
@@ -71,11 +63,11 @@
   tbody tr:hover { background-color: #eff6ff; }
   .col-no { text-align: center; width: 48px; color: #64748b; }
   .col-ticker { text-align: left; font-weight: 700; width: 85px; }
-  .col-cluster { text-align: center; width: 165px; }
+  .col-cluster { text-align: center; width: 115px; }
   .col-num { text-align: right; font-variant-numeric: tabular-nums; }
 
   .c-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
     font-size: 11px; font-weight: 700;
   }
   .c-0 { background-color: #dcfce7; color: #15803d; }
@@ -327,9 +319,9 @@
 
       <select id="clusterFilter" class="filter-select" onchange="renderTable()">
         <option value="all">Semua Klaster (K = 3)</option>
-        <option value="0">Klaster 0 (Low Volatility)</option>
-        <option value="1">Klaster 1 (Medium Volatility)</option>
-        <option value="2">Klaster 2 (High Volatility)</option>
+        <option value="0">Klaster 0</option>
+        <option value="1">Klaster 1</option>
+        <option value="2">Klaster 2</option>
       </select>
 
       <input type="text" id="tickerSearch" class="ticker-input" placeholder="Cari ticker (mis. BBCA)..." onkeyup="renderTable()">
@@ -382,9 +374,9 @@
   }
 
   function getClusterBadge(c) {
-    if (c === 0) return '<span class="c-badge c-0">0 (Low Volatility)</span>';
-    if (c === 1) return '<span class="c-badge c-1">1 (Medium Volatility)</span>';
-    return '<span class="c-badge c-2">2 (High Volatility)</span>';
+    if (c === 0) return '<span class="c-badge c-0">Klaster 0</span>';
+    if (c === 1) return '<span class="c-badge c-1">Klaster 1</span>';
+    return '<span class="c-badge c-2">Klaster 2</span>';
   }
 
   function renderTable() {
@@ -400,9 +392,9 @@
     }
 
     document.getElementById('summaryPills').innerHTML =
-      '<span class="pill pill-0">K0 (Low): ' + c0 + '</span>' +
-      '<span class="pill pill-1">K1 (Med): ' + c1 + '</span>' +
-      '<span class="pill pill-2">K2 (High): ' + c2 + '</span>';
+      '<span class="pill pill-0">Klaster 0: ' + c0 + '</span>' +
+      '<span class="pill pill-1">Klaster 1: ' + c1 + '</span>' +
+      '<span class="pill pill-2">Klaster 2: ' + c2 + '</span>';
 
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
