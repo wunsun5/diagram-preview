@@ -10,23 +10,43 @@
     height: 100vh; display: flex; flex-direction: column; overflow: hidden; color: #2a3f5f;
   }
   .header-bar {
-    padding: 12px 24px 4px 54px;
-    font-size: 15.5px;
+    padding: 10px 20px 6px 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2a3f5f;
+  }
+  .legend-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
     font-weight: 500;
     color: #2a3f5f;
-    flex-shrink: 0;
+  }
+  .leg-swatch {
+    width: 18px;
+    height: 9px;
+    display: inline-block;
   }
   .main-area {
     flex: 1;
     display: flex;
-    padding: 4px 18px 12px 10px;
-    min-height: 0;
-  }
-  .charts-col {
-    flex: 1;
-    display: flex;
     flex-direction: column;
-    min-width: 0;
+    padding: 2px 18px 10px 10px;
     min-height: 0;
   }
   .main-plot-wrap {
@@ -36,7 +56,7 @@
     position: relative;
   }
   .slider-wrap {
-    height: 68px;
+    height: 66px;
     width: 100%;
     flex-shrink: 0;
     margin-top: 2px;
@@ -47,33 +67,8 @@
     font-size: 12.5px;
     color: #2a3f5f;
     padding-top: 2px;
-    padding-left: 44px;
+    padding-left: 34px;
     flex-shrink: 0;
-  }
-  .legend-col {
-    width: 215px;
-    padding: 14px 6px 0 14px;
-    flex-shrink: 0;
-  }
-  .legend-title {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #2a3f5f;
-    margin-bottom: 8px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 11.5px;
-    color: #2a3f5f;
-    margin-bottom: 6px;
-  }
-  .leg-swatch {
-    width: 18px;
-    height: 8px;
-    display: inline-block;
-    position: relative;
   }
   svg { width: 100%; height: 100%; display: block; }
   .tooltip {
@@ -93,17 +88,9 @@
 </style>
 </head>
 <body>
-  <div class="header-bar">Perubahan Struktur Klaster Emiten BEI (Window 60, Step 5 - Skala Global)</div>
-
-  <div class="main-area">
-    <div class="charts-col">
-      <div class="main-plot-wrap" id="mainPlot"></div>
-      <div class="slider-wrap" id="rangeSlider"></div>
-      <div class="x-axis-title">Tanggal Akhir Window</div>
-    </div>
-
-    <div class="legend-col">
-      <div class="legend-title">Klaster</div>
+  <div class="header-bar">
+    <div class="header-title">Perubahan Struktur Klaster Emiten BEI (Window 60, Step 5 - Skala Global)</div>
+    <div class="legend-top">
       <div class="legend-item">
         <span class="leg-swatch" style="background:rgba(44,160,44,0.55); border-top:2px solid #2ca02c;"></span>
         <span>Klaster 0 (Low Volatility)</span>
@@ -119,6 +106,12 @@
     </div>
   </div>
 
+  <div class="main-area">
+    <div class="main-plot-wrap" id="mainPlot"></div>
+    <div class="slider-wrap" id="rangeSlider"></div>
+    <div class="x-axis-title">Tanggal Akhir Window</div>
+  </div>
+
   <div class="tooltip" id="tooltip"></div>
 
 <script>
@@ -129,9 +122,10 @@
   const bulanNama = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
   function formatBulanTahun(tglStr) {
     const parts = tglStr.split('-');
-    const thn = parts;
-    const bln = parseInt(parts, 10) - 1;
-    return bulanNama[bln] + ' ' + thn;
+    const thn = parts.slice(0, 1).join('');
+    const bln = parseInt(parts.slice(1, 2).join(''), 10) - 1;
+    const namaBln = bulanNama.slice(bln, bln + 1).join('');
+    return namaBln + ' ' + thn;
   }
 
   function buildPolygons(rows, W, H, padL, padR, padT, padB) {
@@ -186,8 +180,8 @@
   function renderMain() {
     const rows = allRows.slice(startIdx, endIdx + 1);
     const wrap = document.getElementById('mainPlot');
-    const W = 900, H = 310;
-    const padL = 44, padR = 10, padT = 10, padB = 24;
+    const W = 1040, H = 310;
+    const padL = 44, padR = 12, padT = 10, padB = 24;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
 
@@ -258,8 +252,8 @@
 
   function renderSlider() {
     const wrap = document.getElementById('rangeSlider');
-    const W = 900, H = 64;
-    const padL = 44, padR = 10, padT = 6, padB = 6;
+    const W = 1040, H = 64;
+    const padL = 44, padR = 12, padT = 6, padB = 6;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
     const total = allRows.length - 1;
