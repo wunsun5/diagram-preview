@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; user-select: none; }
+  html, body {
+    margin: 0; padding: 0; background-color: #ffffff;
+    font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden; color: #2a3f5f;
+  }
+  .header-bar {
+    padding: 10px 20px 6px 54px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-shrink: 0;
+  }
+  .header-title {
+    font-size: 14.5px; font-weight: 600; color: #2a3f5f;
+    white-space: nowrap;
+  }
+  .legend-top {
+    display: flex; align-items: center; gap: 20px;
+    font-size: 12px; font-weight: 500; flex-shrink: 0;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+  }
+  .leg-icon {
+    width: 24px; height: 10px; flex-shrink: 0; display: block;
+  }
+  .main-area {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 2px 18px 10px 10px; min-height: 0;
+  }
+  .main-plot-wrap { flex: 1; width: 100%; min-height: 0; position: relative; }
+  .slider-wrap { height: 64px; width: 100%; flex-shrink: 0; margin-top: 2px; position: relative; }
+  .x-axis-title {
+    text-align: center; font-size: 12.5px; color: #2a3f5f;
+    padding-top: 2px; padding-left: 34px; flex-shrink: 0;
+  }
+  .chart-svg { width: 100%; height: 100%; display: block; }
+  .tooltip {
+    position: fixed; background: rgba(255, 255, 255, 0.96); color: #2a3f5f;
+    border: 1px solid #cbd5e1; padding: 7px 10px; border-radius: 4px;
+    font-size: 11.5px; pointer-events: none; display: none; z-index: 200;
+    line-height: 1.5; box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  }
+</style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="header-title">Stabilitas Temporal Struktur Klaster BEI (Window 60, Step 5)</div>
+    <div class="legend-top">
+      <div class="legend-item">
+        <svg class="leg-icon" viewBox="0 0 24 10">
+          <line x1="0" y1="5" x2="24" y2="5" stroke="#1f77b4" stroke-width="1.8"/>
+          <circle cx="12" cy="5" r="2.8" fill="#1f77b4"/>
+        </svg>
+        <span>Skor ARI</span>
+      </div>
+      <div class="legend-item">
+        <svg class="leg-icon" viewBox="0 0 24 10">
+          <line x1="0" y1="5" x2="24" y2="5" stroke="#d62728" stroke-width="1.5" stroke-dasharray="5,3"/>
+        </svg>
+        <span style="color:#d62728; font-weight:600;">Rata-rata ARI (0.55)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="main-plot-wrap" id="mainPlot"></div>
+    <div class="slider-wrap" id="rangeSlider"></div>
+    <div class="x-axis-title">Tanggal Akhir Window</div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+<script>
+  const allRows = [{"d":"2022-02-17","ari":0.7666,"turn":8.87,"n":620},{"d":"2022-02-24","ari":0.5727,"turn":19.97,"n":621},{"d":"2022-03-07","ari":0.4515,"turn":31.37,"n":628},{"d":"2022-03-14","ari":0.5507,"turn":23.33,"n":630},{"d":"2022-03-21","ari":0.7176,"turn":11.29,"n":629},{"d":"2022-03-28","ari":0.6578,"turn":15.18,"n":626},{"d":"2022-04-04","ari":0.4372,"turn":32.17,"n":628},{"d":"2022-04-11","ari":0.4198,"turn":28.78,"n":629},{"d":"2022-04-19","ari":0.6474,"turn":13.81,"n":630},{"d":"2022-04-26","ari":0.2932,"turn":48.82,"n":633},{"d":"2022-05-11","ari":0.4935,"turn":21.42,"n":635},{"d":"2022-05-19","ari":0.6424,"turn":13.44,"n":640},{"d":"2022-05-27","ari":0.7269,"turn":48.28,"n":638},{"d":"2022-06-06","ari":0.4043,"turn":36.83,"n":638},{"d":"2022-06-13","ari":0.7553,"turn":9.25,"n":638},{"d":"2022-06-20","ari":0.6867,"turn":11.6,"n":638},{"d":"2022-06-27","ari":0.2859,"turn":54.55,"n":638},{"d":"2022-07-04","ari":0.4943,"turn":56.51,"n":637},{"d":"2022-07-11","ari":0.7577,"turn":9.12,"n":636},{"d":"2022-07-18","ari":0.5913,"turn":52.82,"n":638},{"d":"2022-07-25","ari":0.5691,"turn":55.62,"n":640},{"d":"2022-08-01","ari":0.5683,"turn":56.7,"n":642},{"d":"2022-08-08","ari":0.2414,"turn":43.61,"n":642},{"d":"2022-08-15","ari":0.2445,"turn":53.35,"n":641},{"d":"2022-08-23","ari":0.215,"turn":45.34,"n":644},{"d":"2022-08-30","ari":0.217,"turn":55.92,"n":642},{"d":"2022-09-06","ari":0.1623,"turn":58.44,"n":640},{"d":"2022-09-13","ari":0.5758,"turn":15.02,"n":639},{"d":"2022-09-20","ari":0.4481,"turn":21.53,"n":641},{"d":"2022-09-27","ari":0.6454,"turn":13.24,"n":642},{"d":"2022-10-04","ari":0.6585,"turn":12.98,"n":647},{"d":"2022-10-11","ari":0.6136,"turn":13.85,"n":650},{"d":"2022-10-18","ari":0.7577,"turn":8.56,"n":654},{"d":"2022-10-25","ari":0.6884,"turn":11.3,"n":655},{"d":"2022-11-01","ari":0.5988,"turn":14.41,"n":666},{"d":"2022-11-08","ari":0.6024,"turn":14.44,"n":665},{"d":"2022-11-15","ari":0.5991,"turn":14.29,"n":665},{"d":"2022-11-22","ari":0.6206,"turn":14.31,"n":664},{"d":"2022-11-29","ari":0.2135,"turn":50.0,"n":664},{"d":"2022-12-06","ari":0.2908,"turn":48.34,"n":662},{"d":"2022-12-13","ari":0.356,"turn":44.61,"n":659},{"d":"2022-12-20","ari":0.5946,"turn":15.5,"n":658},{"d":"2022-12-27","ari":0.7289,"turn":10.09,"n":654},{"d":"2023-01-03","ari":0.6255,"turn":13.94,"n":653},{"d":"2023-01-10","ari":0.6338,"turn":13.82,"n":651},{"d":"2023-01-17","ari":0.5063,"turn":50.23,"n":649},{"d":"2023-01-25","ari":0.6255,"turn":48.15,"n":648},{"d":"2023-02-01","ari":0.7686,"turn":8.8,"n":659},{"d":"2023-02-08","ari":0.6188,"turn":14.52,"n":661},{"d":"2023-02-15","ari":0.4978,"turn":20.27,"n":661},{"d":"2023-02-22","ari":0.5471,"turn":18.73,"n":662},{"d":"2023-03-01","ari":0.5524,"turn":50.83,"n":665},{"d":"2023-03-08","ari":0.6715,"turn":44.19,"n":663},{"d":"2023-03-15","ari":0.5893,"turn":46.46,"n":663},{"d":"2023-03-24","ari":0.6392,"turn":14.2,"n":662},{"d":"2023-03-31","ari":0.6258,"turn":15.28,"n":661},{"d":"2023-04-10","ari":0.6966,"turn":12.87,"n":668},{"d":"2023-04-17","ari":0.7148,"turn":11.36,"n":669},{"d":"2023-05-02","ari":0.6673,"turn":12.78,"n":665},{"d":"2023-05-09","ari":0.6053,"turn":15.33,"n":659},{"d":"2023-05-16","ari":0.2968,"turn":40.39,"n":666},{"d":"2023-05-24","ari":0.277,"turn":43.63,"n":667},{"d":"2023-05-31","ari":0.219,"turn":52.47,"n":667},{"d":"2023-06-09","ari":0.5115,"turn":19.61,"n":663},{"d":"2023-06-16","ari":0.5053,"turn":19.07,"n":666},{"d":"2023-06-23","ari":0.6056,"turn":14.39,"n":667},{"d":"2023-07-05","ari":0.5978,"turn":48.05,"n":668},{"d":"2023-07-12","ari":0.2222,"turn":42.71,"n":665},{"d":"2023-07-20","ari":0.6446,"turn":13.68,"n":665},{"d":"2023-07-27","ari":0.1873,"turn":47.61,"n":670},{"d":"2023-08-03","ari":0.2059,"turn":62.63,"n":669},{"d":"2023-08-10","ari":0.2073,"turn":57.63,"n":675},{"d":"2023-08-18","ari":0.1857,"turn":70.52,"n":675},{"d":"2023-08-25","ari":0.1907,"turn":62.26,"n":673},{"d":"2023-09-01","ari":0.5556,"turn":15.48,"n":672},{"d":"2023-09-08","ari":0.2542,"turn":45.93,"n":675},{"d":"2023-09-15","ari":0.6745,"turn":12.17,"n":674},{"d":"2023-09-22","ari":0.7098,"turn":10.96,"n":675},{"d":"2023-10-02","ari":0.7203,"turn":10.67,"n":675},{"d":"2023-10-09","ari":0.6163,"turn":14.6,"n":678},{"d":"2023-10-16","ari":0.2905,"turn":41.0,"n":678},{"d":"2023-10-23","ari":0.3093,"turn":46.98,"n":679},{"d":"2023-10-30","ari":0.3017,"turn":47.05,"n":678},{"d":"2023-11-06","ari":0.2507,"turn":48.54,"n":686},{"d":"2023-11-13","ari":0.4502,"turn":49.56,"n":686},{"d":"2023-11-20","ari":0.4101,"turn":23.87,"n":687},{"d":"2023-11-27","ari":0.2631,"turn":47.31,"n":687},{"d":"2023-12-04","ari":0.4657,"turn":47.76,"n":691},{"d":"2023-12-11","ari":0.4315,"turn":43.52,"n":694},{"d":"2023-12-18","ari":0.7645,"turn":9.06,"n":695},{"d":"2023-12-27","ari":0.5272,"turn":32.09,"n":695},{"d":"2024-01-04","ari":0.6311,"turn":13.11,"n":702},{"d":"2024-01-11","ari":0.7356,"turn":10.27,"n":701},{"d":"2024-01-18","ari":0.7436,"turn":9.03,"n":698},{"d":"2024-01-25","ari":0.5389,"turn":17.62,"n":698},{"d":"2024-02-01","ari":0.6089,"turn":13.63,"n":697},{"d":"2024-02-12","ari":0.724,"turn":9.55,"n":691},{"d":"2024-02-20","ari":0.5723,"turn":15.28,"n":687},{"d":"2024-02-27","ari":0.6928,"turn":11.34,"n":688},{"d":"2024-03-05","ari":0.6071,"turn":14.78,"n":690},{"d":"2024-03-14","ari":0.6554,"turn":13.08,"n":688},{"d":"2024-03-21","ari":0.534,"turn":18.49,"n":687},{"d":"2024-03-28","ari":0.4151,"turn":24.78,"n":686},{"d":"2024-04-05","ari":0.4566,"turn":22.29,"n":682},{"d":"2024-04-22","ari":0.6533,"turn":12.68,"n":686},{"d":"2024-04-29","ari":0.6314,"turn":52.85,"n":685},{"d":"2024-05-07","ari":0.5549,"turn":17.06,"n":680},{"d":"2024-05-16","ari":0.6746,"turn":42.79,"n":680},{"d":"2024-05-27","ari":0.5324,"turn":48.24,"n":682},{"d":"2024-06-03","ari":0.4337,"turn":50.81,"n":679},{"d":"2024-06-10","ari":0.7175,"turn":39.44,"n":677},{"d":"2024-06-19","ari":0.7345,"turn":10.25,"n":673},{"d":"2024-06-26","ari":0.7694,"turn":8.68,"n":668},{"d":"2024-07-03","ari":0.5858,"turn":46.4,"n":666},{"d":"2024-07-10","ari":0.6066,"turn":15.65,"n":671},{"d":"2024-07-17","ari":0.3326,"turn":29.99,"n":677},{"d":"2024-07-24","ari":0.3657,"turn":26.31,"n":688},{"d":"2024-07-31","ari":0.3342,"turn":27.39,"n":701},{"d":"2024-08-07","ari":0.5746,"turn":15.68,"n":708},{"d":"2024-08-14","ari":0.4803,"turn":20.31,"n":714},{"d":"2024-08-21","ari":0.3384,"turn":32.22,"n":717},{"d":"2024-08-28","ari":0.6115,"turn":14.11,"n":723},{"d":"2024-09-04","ari":0.6318,"turn":14.19,"n":726},{"d":"2024-09-11","ari":0.5468,"turn":17.21,"n":732},{"d":"2024-09-19","ari":0.5907,"turn":15.1,"n":735},{"d":"2024-09-26","ari":0.7093,"turn":10.7,"n":738},{"d":"2024-10-03","ari":0.7136,"turn":10.86,"n":746},{"d":"2024-10-10","ari":0.7835,"turn":8.17,"n":747},{"d":"2024-10-17","ari":0.7026,"turn":11.84,"n":752},{"d":"2024-10-24","ari":0.7011,"turn":10.82,"n":758},{"d":"2024-10-31","ari":0.7193,"turn":10.1,"n":762},{"d":"2024-11-07","ari":0.7088,"turn":10.98,"n":765},{"d":"2024-11-14","ari":0.71,"turn":10.14,"n":769},{"d":"2024-11-21","ari":0.6659,"turn":11.93,"n":771},{"d":"2024-11-29","ari":0.7034,"turn":10.59,"n":774},{"d":"2024-12-06","ari":0.7544,"turn":8.44,"n":770},{"d":"2024-12-13","ari":0.5951,"turn":14.25,"n":765},{"d":"2024-12-20","ari":0.6362,"turn":13.8,"n":761},{"d":"2025-01-02","ari":0.7399,"turn":9.32,"n":762},{"d":"2025-01-09","ari":0.6519,"turn":12.63,"n":760},{"d":"2025-01-16","ari":0.8142,"turn":6.46,"n":758},{"d":"2025-01-23","ari":0.7342,"turn":9.57,"n":752},{"d":"2025-02-04","ari":0.7147,"turn":10.34,"n":754},{"d":"2025-02-11","ari":0.6646,"turn":12.42,"n":749},{"d":"2025-02-18","ari":0.5278,"turn":19.33,"n":750},{"d":"2025-02-25","ari":0.2355,"turn":53.12,"n":753},{"d":"2025-03-04","ari":0.2622,"turn":52.85,"n":755},{"d":"2025-03-11","ari":0.6964,"turn":10.88,"n":754},{"d":"2025-03-18","ari":0.7747,"turn":8.28,"n":749},{"d":"2025-03-25","ari":0.7298,"turn":9.88,"n":749},{"d":"2025-04-10","ari":0.3913,"turn":41.98,"n":748},{"d":"2025-04-17","ari":0.679,"turn":12.48,"n":761},{"d":"2025-04-25","ari":0.68,"turn":12.3,"n":764},{"d":"2025-05-05","ari":0.48,"turn":52.15,"n":767},{"d":"2025-05-14","ari":0.4383,"turn":25.16,"n":771},{"d":"2025-05-21","ari":0.3391,"turn":29.74,"n":770},{"d":"2025-05-28","ari":0.5384,"turn":23.6,"n":767},{"d":"2025-06-10","ari":0.3243,"turn":29.69,"n":768},{"d":"2025-06-17","ari":0.225,"turn":64.72,"n":771},{"d":"2025-06-24","ari":0.272,"turn":70.58,"n":775},{"d":"2025-07-02","ari":0.7531,"turn":8.75,"n":777},{"d":"2025-07-09","ari":0.2512,"turn":68.58,"n":786},{"d":"2025-07-16","ari":0.2068,"turn":68.62,"n":784},{"d":"2025-07-23","ari":0.5576,"turn":16.65,"n":781},{"d":"2025-07-30","ari":0.6254,"turn":13.9,"n":784},{"d":"2025-08-06","ari":0.549,"turn":17.66,"n":787},{"d":"2025-08-13","ari":0.6387,"turn":14.52,"n":785},{"d":"2025-08-21","ari":0.648,"turn":14.25,"n":779},{"d":"2025-08-28","ari":0.5858,"turn":16.58,"n":778},{"d":"2025-09-04","ari":0.7048,"turn":10.94,"n":777},{"d":"2025-09-12","ari":0.7353,"turn":9.65,"n":777},{"d":"2025-09-19","ari":0.6666,"turn":12.84,"n":779},{"d":"2025-09-26","ari":0.71,"turn":10.73,"n":783},{"d":"2025-10-03","ari":0.7478,"turn":9.07,"n":805},{"d":"2025-10-10","ari":0.6342,"turn":14.16,"n":812},{"d":"2025-10-17","ari":0.6438,"turn":14.02,"n":813},{"d":"2025-10-24","ari":0.7219,"turn":10.55,"n":815},{"d":"2025-10-31","ari":0.7394,"turn":9.27,"n":820},{"d":"2025-11-07","ari":0.71,"turn":10.49,"n":820},{"d":"2025-11-14","ari":0.6549,"turn":12.45,"n":827},{"d":"2025-11-21","ari":0.621,"turn":14.06,"n":832},{"d":"2025-11-28","ari":0.5873,"turn":14.92,"n":838},{"d":"2025-12-05","ari":0.6903,"turn":10.87,"n":837},{"d":"2025-12-12","ari":0.6484,"turn":12.78,"n":837},{"d":"2025-12-19","ari":0.6838,"turn":11.44,"n":839},{"d":"2025-12-30","ari":0.6975,"turn":11.46,"n":838},{"d":"2026-01-08","ari":0.6506,"turn":12.72,"n":841},{"d":"2026-01-15","ari":0.5829,"turn":15.68,"n":842},{"d":"2026-01-23","ari":0.6429,"turn":13.35,"n":839},{"d":"2026-01-30","ari":0.6396,"turn":13.95,"n":839},{"d":"2026-02-06","ari":0.4131,"turn":32.66,"n":836},{"d":"2026-02-13","ari":0.3958,"turn":32.38,"n":837},{"d":"2026-02-24","ari":0.6331,"turn":15.36,"n":840},{"d":"2026-03-03","ari":0.4639,"turn":22.51,"n":844},{"d":"2026-03-10","ari":0.6319,"turn":14.34,"n":844},{"d":"2026-03-17","ari":0.6279,"turn":53.47,"n":849},{"d":"2026-03-31","ari":0.691,"turn":55.54,"n":848},{"d":"2026-04-08","ari":0.6487,"turn":14.17,"n":847},{"d":"2026-04-15","ari":0.5915,"turn":16.17,"n":847},{"d":"2026-04-22","ari":0.6318,"turn":15.67,"n":849},{"d":"2026-04-29","ari":0.5642,"turn":20.49,"n":849},{"d":"2026-05-07","ari":0.4825,"turn":27.73,"n":851},{"d":"2026-05-18","ari":0.5753,"turn":45.31,"n":852},{"d":"2026-05-25","ari":0.6337,"turn":51.82,"n":851},{"d":"2026-06-04","ari":0.6372,"turn":52.64,"n":851},{"d":"2026-06-11","ari":0.5215,"turn":49.47,"n":853},{"d":"2026-06-19","ari":0.6121,"turn":51.94,"n":849},{"d":"2026-06-26","ari":0.6673,"turn":12.94,"n":850},{"d":"2026-07-03","ari":0.5977,"turn":51.41,"n":852},{"d":"2026-07-10","ari":0.5676,"turn":18.82,"n":850},{"d":"2026-07-17","ari":0.6834,"turn":14.39,"n":848},{"d":"2026-07-24","ari":0.4829,"turn":23.72,"n":843},{"d":"2026-07-31","ari":0.5827,"turn":16.67,"n":834},{"d":"2026-08-07","ari":0.6404,"turn":13.56,"n":826},{"d":"2026-08-14","ari":0.5247,"turn":19.44,"n":818},{"d":"2026-08-24","ari":0.3463,"turn":42.49,"n":819},{"d":"2026-09-01","ari":0.6296,"turn":14.29,"n":819},{"d":"2026-09-08","ari":0.2751,"turn":51.59,"n":816},{"d":"2026-09-15","ari":0.5837,"turn":15.76,"n":812},{"d":"2026-09-22","ari":0.4605,"turn":48.21,"n":811},{"d":"2026-09-29","ari":0.4429,"turn":22.85,"n":814},{"d":"2026-10-06","ari":0.4321,"turn":23.57,"n":819},{"d":"2026-10-13","ari":0.7569,"turn":9.37,"n":822},{"d":"2026-10-20","ari":0.0472,"turn":54.73,"n":824},{"d":"2026-10-27","ari":0.4756,"turn":21.75,"n":823},{"d":"2026-11-03","ari":0.4519,"turn":61.77,"n":824},{"d":"2026-11-10","ari":0.4544,"turn":21.89,"n":827},{"d":"2026-11-17","ari":0.4595,"turn":65.34,"n":831}];
+  const meanAri = 0.5521;
+  let startIdx = 0;
+  let endIdx = allRows.length - 1;
+
+  const bulanNama = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  function formatBulanTahun(tglStr) {
+    const parts = tglStr.split('-');
+    const thn = parts.slice(0, 1).join('');
+    const bln = parseInt(parts.slice(1, 2).join(''), 10) - 1;
+    const namaBln = bulanNama.slice(bln, bln + 1).join('');
+    return namaBln + ' ' + thn;
+  }
+
+  function renderMain() {
+    const rows = allRows.slice(startIdx, endIdx + 1);
+    const wrap = document.getElementById('mainPlot');
+    const W = 1040, H = 310;
+    const padL = 48, padR = 14, padT = 12, padB = 24;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const yMin = -0.1, yMax = 1.05;
+
+    const n = rows.length;
+    function getX(i) {
+      return (n === 1) ? (padL + plotW / 2) : (padL + (i / (n - 1)) * plotW);
+    }
+    function getY(val) {
+      return padT + plotH - ((val - yMin) / (yMax - yMin)) * plotH;
+    }
+
+    let grid = '<rect x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH + '" fill="#e5ecf6"/>';
+    const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+    for (let t = 0; t < yTicks.length; t++) {
+      const val = Number(yTicks.slice(t, t + 1).join(''));
+      const gy = getY(val);
+      grid += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#ffffff" stroke-width="1.1"/>';
+      grid += '<text x="' + (padL - 7) + '" y="' + (gy + 3.5) + '" font-size="10.5" text-anchor="end" fill="#2a3f5f">' + val.toFixed(1) + '</text>';
+    }
+
+    let xLabels = '';
+    const step = Math.max(1, Math.floor((n - 1) / 8));
+    for (let i = 0; i < n; i += step) {
+      const px = getX(i);
+      grid += '<line x1="' + px + '" y1="' + padT + '" x2="' + px + '" y2="' + (H - padB) + '" stroke="#ffffff" stroke-width="1.1"/>';
+      xLabels += '<text x="' + px + '" y="' + (H - padB + 15) + '" font-size="10.5" text-anchor="middle" fill="#2a3f5f">' + formatBulanTahun(rows[i].d) + '</text>';
+    }
+
+    let pts = [];
+    let dots = '';
+    for (let i = 0; i < n; i++) {
+      const px = getX(i);
+      const py = getY(rows[i].ari);
+      pts.push(px + ',' + py);
+      dots += '<circle cx="' + px + '" cy="' + py + '" r="2.5" fill="#1f77b4"/>';
+    }
+
+    const yMean = getY(meanAri);
+    const meanLine =
+      '<line x1="' + padL + '" y1="' + yMean + '" x2="' + (W - padR) + '" y2="' + yMean + '" stroke="#d62728" stroke-width="1.3" stroke-dasharray="6,4"/>' +
+      '<rect x="' + (W - padR - 118) + '" y="' + (yMean + 4) + '" width="114" height="15" rx="2" fill="#ffffff" fill-opacity="0.82"/>' +
+      '<text x="' + (W - padR - 6) + '" y="' + (yMean + 15) + '" font-size="10.5" font-weight="600" text-anchor="end" fill="#d62728">Rata-rata ARI (' + meanAri.toFixed(2) + ')</text>';
+
+    wrap.innerHTML =
+      '<svg class="chart-svg" id="mainSvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+      grid +
+      '<polyline fill="none" stroke="#1f77b4" stroke-width="1.8" points="' + pts.join(' ') + '"/>' +
+      dots +
+      meanLine +
+      xLabels +
+      '<text x="14" y="' + (padT + plotH / 2) + '" font-size="11.5" text-anchor="middle" fill="#2a3f5f" transform="rotate(-90 14 ' + (padT + plotH / 2) + ')">Adjusted Rand Index (ARI)</text>' +
+      '<line id="hoverLine" x1="0" y1="' + padT + '" x2="0" y2="' + (H - padB) + '" stroke="#2a3f5f" stroke-width="1" stroke-dasharray="3,3" style="display:none;"/>' +
+      '<circle id="hoverDot" cx="0" cy="0" r="4.5" fill="#1f77b4" stroke="#ffffff" stroke-width="1.5" style="display:none;"/>' +
+      '<rect id="overlayRect" x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH + '" fill="transparent" style="cursor:crosshair;"/>' +
+      '</svg>';
+
+    const svgEl = document.getElementById('mainSvg');
+    const overlay = document.getElementById('overlayRect');
+    const hLine = document.getElementById('hoverLine');
+    const hDot = document.getElementById('hoverDot');
+    const tip = document.getElementById('tooltip');
+
+    overlay.addEventListener('mousemove', function(e) {
+      const rect = svgEl.getBoundingClientRect();
+      const relX = ((e.clientX - rect.left) / rect.width) * W;
+      let ratio = (relX - padL) / plotW;
+      ratio = Math.max(0, Math.min(1, ratio));
+      const idx = Math.round(ratio * (n - 1));
+      const item = rows[idx];
+      const snapX = getX(idx);
+      const snapY = getY(item.ari);
+
+      hLine.setAttribute('x1', snapX);
+      hLine.setAttribute('x2', snapX);
+      hLine.style.display = 'block';
+
+      hDot.setAttribute('cx', snapX);
+      hDot.setAttribute('cy', snapY);
+      hDot.style.display = 'block';
+
+      tip.style.display = 'block';
+      const tipX = (e.clientX + 205 > window.innerWidth) ? (e.clientX - 200) : (e.clientX + 14);
+      tip.style.left = tipX + 'px';
+      tip.style.top = (e.clientY + 12) + 'px';
+      tip.innerHTML =
+        '<b>Tanggal: ' + item.d + '</b><br>' +
+        'ARI Score: <b style="color:#1f77b4;">' + item.ari.toFixed(4) + '</b><br>' +
+        'Turnover Rate: <b>' + item.turn.toFixed(2) + '%</b><br>' +
+        'Emiten Irisan: ' + item.n;
+    });
+
+    overlay.addEventListener('mouseleave', function() {
+      hLine.style.display = 'none';
+      hDot.style.display = 'none';
+      tip.style.display = 'none';
+    });
+  }
+
+  function renderSlider() {
+    const wrap = document.getElementById('rangeSlider');
+    const W = 1040, H = 62;
+    const padL = 48, padR = 14, padT = 6, padB = 6;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const yMin = -0.1, yMax = 1.05;
+    const total = allRows.length - 1;
+
+    let pts = [];
+    for (let i = 0; i <= total; i++) {
+      const px = padL + (i / total) * plotW;
+      const py = padT + plotH - ((allRows[i].ari - yMin) / (yMax - yMin)) * plotH;
+      pts.push(px + ',' + py);
+    }
+
+    const xStart = padL + (startIdx / total) * plotW;
+    const xEnd = padL + (endIdx / total) * plotW;
+
+    wrap.innerHTML =
+      '<svg class="chart-svg" id="sliderSvg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+      '<rect x="' + padL + '" y="' + padT + '" width="' + plotW + '" height="' + plotH + '" fill="#e5ecf6"/>' +
+      '<polyline fill="none" stroke="#1f77b4" stroke-width="1.3" points="' + pts.join(' ') + '"/>' +
+      '<rect x="' + padL + '" y="' + padT + '" width="' + Math.max(0, xStart - padL) + '" height="' + plotH + '" fill="#ffffff" fill-opacity="0.62"/>' +
+      '<rect x="' + xEnd + '" y="' + padT + '" width="' + Math.max(0, (W - padR) - xEnd) + '" height="' + plotH + '" fill="#ffffff" fill-opacity="0.62"/>' +
+      '<rect id="winBox" x="' + xStart + '" y="' + padT + '" width="' + Math.max(4, xEnd - xStart) + '" height="' + plotH + '" fill="transparent" stroke="#64748b" stroke-width="1.2" style="cursor:grab;"/>' +
+      '<rect id="handleL" x="' + (xStart - 3) + '" y="' + (padT + 12) + '" width="6" height="' + (plotH - 24) + '" rx="2" fill="#ffffff" stroke="#475569" stroke-width="1.2" style="cursor:ew-resize;"/>' +
+      '<rect id="handleR" x="' + (xEnd - 3) + '" y="' + (padT + 12) + '" width="6" height="' + (plotH - 24) + '" rx="2" fill="#ffffff" stroke="#475569" stroke-width="1.2" style="cursor:ew-resize;"/>' +
+      '</svg>';
+
+    const svgS = document.getElementById('sliderSvg');
+    let dragMode = null;
+    let dragOffset = 0;
+
+    function clientToIdx(clientX) {
+      const rect = svgS.getBoundingClientRect();
+      const relX = ((clientX - rect.left) / rect.width) * W;
+      const ratio = Math.max(0, Math.min(1, (relX - padL) / plotW));
+      return Math.round(ratio * total);
+    }
+
+    document.getElementById('handleL').addEventListener('mousedown', function(e) { dragMode = 'left'; e.stopPropagation(); });
+    document.getElementById('handleR').addEventListener('mousedown', function(e) { dragMode = 'right'; e.stopPropagation(); });
+    document.getElementById('winBox').addEventListener('mousedown', function(e) {
+      dragMode = 'move';
+      dragOffset = clientToIdx(e.clientX) - startIdx;
+      e.stopPropagation();
+    });
+
+    window.onmousemove = function(e) {
+      if (!dragMode) return;
+      const cur = clientToIdx(e.clientX);
+      if (dragMode === 'left') startIdx = Math.min(cur, endIdx - 5);
+      else if (dragMode === 'right') endIdx = Math.max(cur, startIdx + 5);
+      else if (dragMode === 'move') {
+        const span = endIdx - startIdx;
+        let ns = Math.max(0, Math.min(total - span, cur - dragOffset));
+        startIdx = ns;
+        endIdx = ns + span;
+      }
+      renderMain();
+      renderSlider();
+    };
+
+    window.onmouseup = function() { dragMode = null; };
+  }
+
+  renderMain();
+  renderSlider();
+</script>
+</body>
+</html>
