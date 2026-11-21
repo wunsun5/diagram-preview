@@ -22,10 +22,29 @@ const rnd=()=>{let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t
 const krt=a=>{let n=a.length,m=a.reduce((p,c)=>p+c,0)/n,s=Math.sqrt(a.reduce((p,c)=>p+(c-m)**2,0)/n)||1;return a.reduce((p,c)=>p+((c-m)/s)**4,0)/n-3;};
 
 function draw(sv){
-  let old=seed,N=30,hf=new Array();
-  for(let i=0;i<15;i++)hf.push(Math.abs(Math.sqrt(-2*Math.log(Math.max(1e-6,rnd())))*Math.cos(2*Math.PI*rnd())));
-  let sp=new Array();for(let i=0;i<15;i++){sp.push(-hf.at(i));sp.push(hf.at(i));}
-  let ord=sp.map(v=>({v,r:rnd()})).sort((a,b)=>a.r-b.r).map(o=>o.v);seed=old;
+  let old=seed,N=30,pos=new Array(),neg=new Array();
+  for(let i=0;i<15;i++){
+    let z=Math.abs(Math.sqrt(-2*Math.log(Math.max(1e-6,rnd())))*Math.cos(2*Math.PI*rnd()));
+    pos.push({v:z,r:rnd()});
+    neg.push({v:-z,r:rnd()});
+  }
+  pos.sort((a,b)=>a.r-b.r);
+  neg.sort((a,b)=>a.r-b.r);
+
+  // Susun selang-seling alami (maksimal 2 hari searah) agar tidak ada garis naik/turun sejajar berhari-hari
+  let ord=new Array(),pi=0,ni=0,streak=0,lastSign=0;
+  while(pi<15 || ni<15){
+    let pickPos;
+    if(pi>=15) pickPos=false;
+    else if(ni>=15) pickPos=true;
+    else if(streak>=2) pickPos=(lastSign<0);
+    else pickPos=(rnd()<0.5);
+    let sign=pickPos?1:-1;
+    streak=(sign===lastSign)?streak+1:1;
+    lastSign=sign;
+    ord.push(pickPos?pos.at(pi++).v:neg.at(ni++).v);
+  }
+  seed=old;
 
   let lo=0.15,hi=4.5,best=ord.slice();
   for(let it=0;it<55;it++){
@@ -70,13 +89,15 @@ function draw(sv){
   g+=`<line x1="80" y1="20" x2="80" y2="295" stroke="#334155" stroke-width="1.3"/><line x1="80" y1="295" x2="890" y2="295" stroke="#334155" stroke-width="1.3"/>`;
   g+=`<line x1="${x(0)}" y1="${y(100)}" x2="${x(30)}" y2="${y(120)}" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="7,4"/>`;
 
-  // Gambar segmen garis per hari: menyala MERAH TEBAL jika lompatan harian menembus +-2x Realized Volatility
-  let cntOut=0;
+  let cPts=pts.map(p=>({px:x(p.d),py:y(p.v)}));
+  let cntOut=0, t=0.45;
   for(let i=0;i<N;i++){
-    let p1=pts.at(i), p2=pts.at(i+1);
+    let p0=cPts.at(Math.max(0,i-1)), p1=cPts.at(i), p2=cPts.at(i+1), p3=cPts.at(Math.min(N,i+2));
+    let cp1x=p1.px+(p2.px-p0.px)*t/3, cp1y=p1.py+(p2.py-p0.py)*t/3;
+    let cp2x=p2.px-(p3.px-p1.px)*t/3, cp2y=p2.py-(p3.py-p1.py)*t/3;
     let isJump=Math.abs(devRets.at(i))>2*vol;
     if(isJump) cntOut++;
-    g+=`<line x1="${x(p1.d).toFixed(1)}" y1="${y(p1.v).toFixed(1)}" x2="${x(p2.d).toFixed(1)}" y2="${y(p2.v).toFixed(1)}" stroke="${isJump?'#dc2626':'#0f172a'}" stroke-width="${isJump?'3.4':'2.2'}" stroke-linecap="round"/>`;
+    g+=`<path d="M ${p1.px.toFixed(1)} ${p1.py.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.px.toFixed(1)} ${p2.py.toFixed(1)}" fill="none" stroke="${isJump?'#dc2626':'#0f172a'}" stroke-width="${isJump?'3.5':'2.3'}" stroke-linecap="round"/>`;
   }
 
   g+=`<circle cx="${x(0)}" cy="${y(100)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
