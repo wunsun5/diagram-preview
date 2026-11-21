@@ -33,14 +33,18 @@ function draw(sv){
     if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
   }
   let mB=best.reduce((p,c)=>p+c,0)/N,sB=Math.sqrt(best.reduce((p,c)=>p+(c-mB)**2,0)/N)||1;
-  let vol=0.017,rets=best.map(r=>((r-mB)/sB)*vol+Math.log(1.2)/N),ek=krt(rets),disp=Math.abs(ek)<0.02?0:ek;
+  let vol=0.017,meanRet=Math.log(1.2)/N;
+  let devRets=best.map(r=>((r-mB)/sB)*vol);
+  let rets=devRets.map(d=>d+meanRet),ek=krt(rets),disp=Math.abs(ek)<0.02?0:ek;
 
-  let pts=new Array({d:0,v:100}),cur=100,minV=95,maxV=125;
+  // Tampilkan penyimpangan harian di sekitar garis tren Mean agar posisi & lompatan harian selaras
+  let pts=new Array({d:0,v:100}),minV=95,maxV=125;
   for(let i=0;i<N;i++){
-    cur*=Math.exp(rets.at(i));
-    if(cur<minV)minV=Math.floor(cur/5)*5;
-    if(cur>maxV)maxV=Math.ceil(cur/5)*5;
-    pts.push({d:i+1,v:cur});
+    let meanAtD=100+(20/30)*(i+1);
+    let val=i===N-1?120:meanAtD*Math.exp(devRets.at(i));
+    if(val<minV)minV=Math.floor(val/5)*5;
+    if(val>maxV)maxV=Math.ceil(val/5)*5;
+    pts.push({d:i+1,v:val});
   }
 
   const x=d=>80+(d/30)*810, y=v=>295-((v-minV)/(maxV-minV))*275;
@@ -56,40 +60,27 @@ function draw(sv){
   g+=`<text x="22" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" transform="rotate(-90 22 160)">Nilai Portofolio (Juta Rp)</text>`;
   g+=`<text x="485" y="334" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Periode Waktu (Hari)</text>`;
 
-  let b1=100*(Math.exp(vol)-1),b2=100*(Math.exp(2*vol)-1);
-  // Blok +-2x Realized Volatility (Luar)
+  let b1=110*(Math.exp(vol)-1),b2=110*(Math.exp(2*vol)-1);
   g+=`<polygon points="${x(0)},${y(100+b2)} ${x(30)},${y(120+b2)} ${x(30)},${y(120-b2)} ${x(0)},${y(100-b2)}" fill="#bae6fd" opacity="0.50"/>`;
-  // Blok +-1x Realized Volatility (Dalam)
   g+=`<polygon points="${x(0)},${y(100+b1)} ${x(30)},${y(120+b1)} ${x(30)},${y(120-b1)} ${x(0)},${y(100-b1)}" fill="#38bdf8" opacity="0.55"/>`;
-  // Garis batas putus-putus +-2x
   g+=`<line x1="${x(0)}" y1="${y(100+b2)}" x2="${x(30)}" y2="${y(120+b2)}" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="3,3"/>`;
   g+=`<line x1="${x(0)}" y1="${y(100-b2)}" x2="${x(30)}" y2="${y(120-b2)}" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="3,3"/>`;
-
-  // Sumbu Utama
   g+=`<line x1="80" y1="20" x2="80" y2="295" stroke="#334155" stroke-width="1.3"/><line x1="80" y1="295" x2="890" y2="295" stroke="#334155" stroke-width="1.3"/>`;
-
-  // Garis Tren Mean Log Return
   g+=`<line x1="${x(0)}" y1="${y(100)}" x2="${x(30)}" y2="${y(120)}" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="7,4"/>`;
-
-  // Garis Nilai Portofolio
   g+=`<path d="${pts.map((p,i)=>(i?'L':'M')+x(p.d).toFixed(1)+' '+y(p.v).toFixed(1)).join(' ')}" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round"/>`;
 
-  // Titik merah untuk hari yang menembus keluar batas +-2x Realized Volatility
+  // Titik merah HANYA menyala jika lonjakan harian menembus keluar batas +-2x Realized Volatility
   let cntOut=0;
   pts.forEach((p,i)=>{
-    let meanAtD=100+(20/30)*p.d;
-    let jumpOut=(i>0 && Math.abs(rets.at(i-1))>2*vol) || Math.abs(p.v-meanAtD)>b2;
-    if(i>0 && i<30 && jumpOut){
+    if(i>0 && i<30 && Math.abs(devRets.at(i-1))>2*vol){
       cntOut++;
       g+=`<circle cx="${x(p.d).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="5" fill="#dc2626" stroke="#fff" stroke-width="1.4"/>`;
     }
   });
 
-  // Titik Awal & Akhir
   g+=`<circle cx="${x(0)}" cy="${y(100)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
   g+=`<circle cx="${x(30)}" cy="${y(120)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
 
-  // Kotak Legenda Kiri Atas (Persis seperti gambar referensi)
   g+=`<rect x="92" y="26" width="285" height="92" rx="6" fill="#ffffff" fill-opacity="0.93" stroke="#cbd5e1" stroke-width="1"/>`;
   g+=`<rect x="102" y="35" width="18" height="10" fill="#bae6fd" opacity="0.8"/><text x="126" y="43" font-size="10.5" fill="#1e293b">Blok &plusmn;2x Realized Volatility (Batas Toleransi)</text>`;
   g+=`<rect x="102" y="51" width="18" height="10" fill="#38bdf8" opacity="0.75"/><text x="126" y="59" font-size="10.5" fill="#1e293b">Blok &plusmn;1x Realized Volatility (Goyangan Normal)</text>`;
