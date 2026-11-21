@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html style="height:100%;margin:0;padding:0">
+<body style="margin:0;padding:0;font-family:'Segoe UI',Roboto,sans-serif;background:#fff;color:#1e293b;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 10px;box-sizing:border-box;min-height:0">
+  <div style="text-align:center;font-weight:700;font-size:13.5px;color:#0f172a;margin-bottom:2px;flex-shrink:0">
+    Visualisasi Metrik Kurtosis: Blok &plusmn;1x vs &plusmn;2x Realized Volatility
+  </div>
+  <svg id="s1" viewBox="0 0 920 340" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
+  <div style="background:#f1f5f9;padding:6px 12px;border-radius:6px;text-align:center;margin-top:4px;flex-shrink:0;border:1px solid #e2e8f0">
+    <b id="lbl" style="font-size:12px;color:#0f172a">Excess Kurtosis: 0.00 (Mesokurtic / Normal)</b>
+    <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:8px;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:11px;font-weight:600">Ubah Sampel</button>
+    <input id="sl" type="range" min="-1.2" max="12" step="0.2" value="0" style="width:92%;margin-top:4px;display:block;margin-inline:auto;cursor:pointer">
+    <div style="display:flex;justify-content:space-between;font-size:10px;width:92%;margin:1px auto 0;color:#475569;font-weight:600">
+      <span>-1.2 (Platykurtic / Ekor Tipis)</span><span>0.0 (Normal)</span><span>+12.0 (Leptokurtic / Fat Tail Ekstrem)</span>
+    </div>
+  </div>
+</div>
+<script>
+const G=id=>document.getElementById(id),S1=G('s1'),SL=G('sl'),L=G('lbl');
+let seed=15;
+const rnd=()=>{let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+const krt=a=>{let n=a.length,m=a.reduce((p,c)=>p+c,0)/n,s=Math.sqrt(a.reduce((p,c)=>p+(c-m)**2,0)/n)||1;return a.reduce((p,c)=>p+((c-m)/s)**4,0)/n-3;};
+
+function draw(sv){
+  let old=seed,N=30,hf=new Array();
+  for(let i=0;i<15;i++)hf.push(Math.abs(Math.sqrt(-2*Math.log(Math.max(1e-6,rnd())))*Math.cos(2*Math.PI*rnd())));
+  let sp=new Array();for(let i=0;i<15;i++){sp.push(-hf.at(i));sp.push(hf.at(i));}
+  let ord=sp.map(v=>({v,r:rnd()})).sort((a,b)=>a.r-b.r).map(o=>o.v);seed=old;
+
+  let lo=0.15,hi=4.5,best=ord.slice();
+  for(let it=0;it<55;it++){
+    let mid=(lo+hi)/2,cnd=ord.map(z=>Math.sign(z)*Math.pow(Math.abs(z),mid));
+    if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
+  }
+  let mB=best.reduce((p,c)=>p+c,0)/N,sB=Math.sqrt(best.reduce((p,c)=>p+(c-mB)**2,0)/N)||1;
+  let vol=0.017,rets=best.map(r=>((r-mB)/sB)*vol+Math.log(1.2)/N),ek=krt(rets),disp=Math.abs(ek)<0.02?0:ek;
+
+  let pts=new Array({d:0,v:100}),cur=100,minV=95,maxV=125;
+  for(let i=0;i<N;i++){
+    cur*=Math.exp(rets.at(i));
+    if(cur<minV)minV=Math.floor(cur/5)*5;
+    if(cur>maxV)maxV=Math.ceil(cur/5)*5;
+    pts.push({d:i+1,v:cur});
+  }
+
+  const x=d=>80+(d/30)*810, y=v=>295-((v-minV)/(maxV-minV))*275;
+  let g='';
+  for(let v=minV;v<=maxV;v+=5){
+    g+=`<line x1="80" y1="${y(v)}" x2="890" y2="${y(v)}" stroke="#e2e8f0" stroke-width="1"/>`;
+    g+=`<text x="72" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#334155">Rp ${v}Jt</text>`;
+  }
+  for(let d=0;d<=30;d+=5){
+    g+=`<line x1="${x(d)}" y1="20" x2="${x(d)}" y2="295" stroke="#e2e8f0" stroke-width="1"/>`;
+    g+=`<text x="${x(d)}" y="314" text-anchor="middle" font-size="11" fill="#334155">Hari ${d}</text>`;
+  }
+  g+=`<text x="22" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" transform="rotate(-90 22 160)">Nilai Portofolio (Juta Rp)</text>`;
+  g+=`<text x="485" y="334" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Periode Waktu (Hari)</text>`;
+
+  let b1=100*(Math.exp(vol)-1),b2=100*(Math.exp(2*vol)-1);
+  // Blok +-2x Realized Volatility (Luar)
+  g+=`<polygon points="${x(0)},${y(100+b2)} ${x(30)},${y(120+b2)} ${x(30)},${y(120-b2)} ${x(0)},${y(100-b2)}" fill="#bae6fd" opacity="0.50"/>`;
+  // Blok +-1x Realized Volatility (Dalam)
+  g+=`<polygon points="${x(0)},${y(100+b1)} ${x(30)},${y(120+b1)} ${x(30)},${y(120-b1)} ${x(0)},${y(100-b1)}" fill="#38bdf8" opacity="0.55"/>`;
+  // Garis batas putus-putus +-2x
+  g+=`<line x1="${x(0)}" y1="${y(100+b2)}" x2="${x(30)}" y2="${y(120+b2)}" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="3,3"/>`;
+  g+=`<line x1="${x(0)}" y1="${y(100-b2)}" x2="${x(30)}" y2="${y(120-b2)}" stroke="#0284c7" stroke-width="1.4" stroke-dasharray="3,3"/>`;
+
+  // Sumbu Utama
+  g+=`<line x1="80" y1="20" x2="80" y2="295" stroke="#334155" stroke-width="1.3"/><line x1="80" y1="295" x2="890" y2="295" stroke="#334155" stroke-width="1.3"/>`;
+
+  // Garis Tren Mean Log Return
+  g+=`<line x1="${x(0)}" y1="${y(100)}" x2="${x(30)}" y2="${y(120)}" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="7,4"/>`;
+
+  // Garis Nilai Portofolio
+  g+=`<path d="${pts.map((p,i)=>(i?'L':'M')+x(p.d).toFixed(1)+' '+y(p.v).toFixed(1)).join(' ')}" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round"/>`;
+
+  // Titik merah untuk hari yang menembus keluar batas +-2x Realized Volatility
+  let cntOut=0;
+  pts.forEach((p,i)=>{
+    let meanAtD=100+(20/30)*p.d;
+    let jumpOut=(i>0 && Math.abs(rets.at(i-1))>2*vol) || Math.abs(p.v-meanAtD)>b2;
+    if(i>0 && i<30 && jumpOut){
+      cntOut++;
+      g+=`<circle cx="${x(p.d).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="5" fill="#dc2626" stroke="#fff" stroke-width="1.4"/>`;
+    }
+  });
+
+  // Titik Awal & Akhir
+  g+=`<circle cx="${x(0)}" cy="${y(100)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
+  g+=`<circle cx="${x(30)}" cy="${y(120)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
+
+  // Kotak Legenda Kiri Atas (Persis seperti gambar referensi)
+  g+=`<rect x="92" y="26" width="285" height="92" rx="6" fill="#ffffff" fill-opacity="0.93" stroke="#cbd5e1" stroke-width="1"/>`;
+  g+=`<rect x="102" y="35" width="18" height="10" fill="#bae6fd" opacity="0.8"/><text x="126" y="43" font-size="10.5" fill="#1e293b">Blok &plusmn;2x Realized Volatility (Batas Toleransi)</text>`;
+  g+=`<rect x="102" y="51" width="18" height="10" fill="#38bdf8" opacity="0.75"/><text x="126" y="59" font-size="10.5" fill="#1e293b">Blok &plusmn;1x Realized Volatility (Goyangan Normal)</text>`;
+  g+=`<line x1="102" y1="72" x2="120" y2="72" stroke="#2e8b57" stroke-width="2" stroke-dasharray="5,3"/><text x="126" y="75" font-size="10.5" fill="#1e293b">Garis Tren Mean Log Return</text>`;
+  g+=`<line x1="102" y1="88" x2="120" y2="88" stroke="#0f172a" stroke-width="2.2"/><text x="126" y="91" font-size="10.5" fill="#1e293b">Nilai Portofolio</text>`;
+  g+=`<circle cx="111" cy="105" r="4.5" fill="#dc2626"/><text x="126" y="108" font-size="10.5" fill="#dc2626" font-weight="600">Lonjakan Ekstrem (Tembus &plusmn;2x Realized Vol)</text>`;
+
+  S1.innerHTML=g;
+  let jenis=disp>0.5?'Leptokurtic / Fat Tail':disp<-0.4?'Platykurtic / Ekor Tipis':'Mesokurtic / Normal';
+  L.textContent=`Excess Kurtosis: ${disp>0?'+':''}${disp.toFixed(2)} (${jenis}) — Tembus ±2x Vol: ${cntOut} titik`;
+}
+SL.oninput=()=>draw(+SL.value);draw(0);
+</script>
+</body>
+</html>
