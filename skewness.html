@@ -1,19 +1,18 @@
-<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f8fafc;padding:16px;color:#1e293b">
-<div style="max-width:1180px;margin:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 12px #0001">
-<h3 style="text-align:center;margin:0 0 16px;color:#0f172a">Analisis Skewness Portofolio Keuangan</h3>
-<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:stretch">
- <div style="flex:1.1;min-width:420px;border:1px solid #e2e8f0;border-radius:8px;padding:14px">
-  <b style="font-size:13.5px;color:#0f172a">Performa Portofolio (Modal Awal Rp 100 Juta)</b>
-  <svg id="s1" viewBox="0 0 600 310" style="width:100%;margin-top:6px"></svg>
-  <div style="background:#f1f5f9;padding:12px;border-radius:6px;text-align:center;margin-top:6px">
-   <b id="lbl" style="font-size:13.5px;color:#0f172a">Skewness: 0.00 (Simetris)</b>
-   <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:10px;padding:4px 10px;border-radius:5px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:12px;font-weight:600">Ubah Sampel</button><br><br>
-   <input id="sl" type="range" min="-5" max="5" step="0.1" value="0" style="width:94%">
-   <div style="display:flex;justify-content:space-between;font-size:11px;width:94%;margin:4px auto;color:#475569">
-    <span>-5.0 (Negative Skew)</span><span>0.0 (Simetris)</span><span>+5.0 (Positive Skew)</span></div></div></div>
- <div style="flex:1;min-width:400px;border:1px solid #e2e8f0;border-radius:8px;padding:14px;display:flex;flex-direction:column;justify-content:space-between">
-  <b style="font-size:13.5px;color:#0f172a">Selisih Return Harian terhadap Mean (Terurut)</b>
-  <svg id="s3" viewBox="0 0 540 340" style="width:100%;margin:auto"></svg></div></div></div>
+<!DOCTYPE html><html><body style="margin:0;padding:8px;font-family:sans-serif;background:transparent;color:#1e293b;height:100vh;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;background:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 2px 10px #0001;display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;gap:12px;flex:1;min-height:0">
+ <div style="flex:1.1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;min-width:0">
+  <b style="font-size:12px;color:#0f172a">Performa Portofolio (Modal Awal Rp 100 Juta)</b>
+  <svg id="s1" viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
+  <div style="background:#f1f5f9;padding:8px 10px;border-radius:6px;text-align:center;margin-top:4px">
+   <b id="lbl" style="font-size:12px;color:#0f172a">Skewness: 0.00 (Simetris)</b>
+   <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:8px;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:11px;font-weight:600">Ubah Sampel</button>
+   <input id="sl" type="range" min="-5" max="5" step="0.1" value="0" style="width:94%;margin-top:6px;display:block;margin-inline:auto">
+   <div style="display:flex;justify-content:space-between;font-size:10px;width:94%;margin:2px auto 0;color:#475569">
+    <span>-5.0 (Negative)</span><span>0.0 (Simetris)</span><span>+5.0 (Positive)</span></div></div></div>
+ <div style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;min-width:0">
+  <b style="font-size:12px;color:#0f172a">Selisih Return Harian terhadap Mean (Terurut)</b>
+  <svg id="s3" viewBox="0 0 540 330" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg></div></div></div>
 <script>
 const G=id=>document.getElementById(id),S1=G('s1'),S3=G('s3'),SL=G('sl'),L=G('lbl');
 let seed=42;
@@ -33,24 +32,24 @@ function draw(sv){
  let rets=best.map(r=>((r-mB)/sB)*(0.016+Math.abs(tk)*0.0028)+Math.log(1.2)/N),sk=skw(rets),disp=Math.abs(sk)<0.005?0:sk;
  let pts=new Array({d:0,v:100}),cur=100,minV=95,maxV=125;
  for(let i=0;i<N;i++){cur*=Math.exp(rets.at(i));if(cur<minV)minV=Math.floor(cur/5)*5;if(cur>maxV)maxV=Math.ceil(cur/5)*5;pts.push({d:i+1,v:cur});}
- const x1=d=>55+(d/30)*520,y1=v=>275-((v-minV)/(maxV-minV))*245;let g1='';
+ const x1=d=>55+(d/30)*520,y1=v=>245-((v-minV)/(maxV-minV))*220;let g1='';
  for(let v=minV;v<=maxV;v+=5)g1+=`<line x1="55" y1="${y1(v)}" x2="575" y2="${y1(v)}" stroke="#e2e8f0"/><text x="50" y="${y1(v)+4}" text-anchor="end" font-size="10">Rp ${v}Jt</text>`;
- for(let d=0;d<=30;d+=5)g1+=`<line x1="${x1(d)}" y1="30" x2="${x1(d)}" y2="275" stroke="#e2e8f0"/><text x="${x1(d)}" y="292" text-anchor="middle" font-size="10">Hari ${d}</text>`;
- g1+=`<line x1="55" y1="30" x2="55" y2="275" stroke="#334155"/><line x1="55" y1="275" x2="575" y2="275" stroke="#334155"/>`;
+ for(let d=0;d<=30;d+=5)g1+=`<line x1="${x1(d)}" y1="25" x2="${x1(d)}" y2="245" stroke="#e2e8f0"/><text x="${x1(d)}" y="262" text-anchor="middle" font-size="10">Hari ${d}</text>`;
+ g1+=`<line x1="55" y1="25" x2="55" y2="245" stroke="#334155"/><line x1="55" y1="245" x2="575" y2="245" stroke="#334155"/>`;
  g1+=`<line x1="${x1(0)}" y1="${y1(100)}" x2="${x1(30)}" y2="${y1(120)}" stroke="#2e8b57" stroke-width="2" stroke-dasharray="6,4"/>`;
  g1+=`<path d="${pts.map((p,i)=>(i?'L':'M')+x1(p.d).toFixed(1)+' '+y1(p.v).toFixed(1)).join(' ')}" fill="none" stroke="#1e293b" stroke-width="2"/>`;
  g1+=`<circle cx="${x1(0)}" cy="${y1(100)}" r="4" fill="#fff" stroke="#1e293b" stroke-width="2"/><circle cx="${x1(30)}" cy="${y1(120)}" r="4" fill="#fff" stroke="#1e293b" stroke-width="2"/>`;
  S1.innerHTML=g1;
  let pcts=rets.map(r=>r*100),srt=pcts.slice().sort((a,b)=>a-b),meanP=pcts.reduce((p,c)=>p+c,0)/N,medP=(srt.at(14)+srt.at(15))/2;
- let diffs=srt.map(v=>v-meanP),mA=Math.max(2,...diffs.map(v=>Math.abs(v))),y0=175,bW=470/N,g3='';
- diffs.forEach((v,i)=>{let bx=37+i*bW,bh=(Math.abs(v)/mA)*118;g3+=`<rect x="${bx.toFixed(1)}" y="${(v>=0?y0-bh:y0).toFixed(1)}" width="${(bW-2.5).toFixed(1)}" height="${Math.max(2,bh).toFixed(1)}" fill="${v>=0?'#0284c7':'#be123c'}" rx="1.5"/>`;});
+ let diffs=srt.map(v=>v-meanP),mA=Math.max(2,...diffs.map(v=>Math.abs(v))),y0=170,bW=470/N,g3='';
+ diffs.forEach((v,i)=>{let bx=37+i*bW,bh=(Math.abs(v)/mA)*112;g3+=`<rect x="${bx.toFixed(1)}" y="${(v>=0?y0-bh:y0).toFixed(1)}" width="${(bW-2.5).toFixed(1)}" height="${Math.max(2,bh).toFixed(1)}" fill="${v>=0?'#0284c7':'#be123c'}" rx="1.5"/>`;});
  let mX=37+15*bW-1.25;
  g3+=`<line x1="35" y1="${y0}" x2="510" y2="${y0}" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="6,4"/>`;
  g3+=`<rect x="385" y="${y0+6}" width="123" height="18" rx="4" fill="#ecfdf5" stroke="#a7f3d0"/>`;
  g3+=`<text x="503" y="${y0+18}" text-anchor="end" font-size="10.5" font-weight="bold" fill="#2e8b57">Garis Mean (${meanP.toFixed(2)}%)</text>`;
- g3+=`<line x1="${mX.toFixed(1)}" y1="28" x2="${mX.toFixed(1)}" y2="305" stroke="#7c3aed" stroke-width="2.4"/>`;
- g3+=`<text x="${mX.toFixed(1)}" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#7c3aed">Median (${medP.toFixed(2)}%)</text>`;
- g3+=`<text x="37" y="324" font-size="10.5" fill="#be123c" font-weight="600">Min (${diffs.at(0).toFixed(1)}% dr Mean)</text><text x="506" y="324" text-anchor="end" font-size="10.5" fill="#0284c7" font-weight="600">Max (+${diffs.at(29).toFixed(1)}% dr Mean)</text>`;
+ g3+=`<line x1="${mX.toFixed(1)}" y1="26" x2="${mX.toFixed(1)}" y2="295" stroke="#7c3aed" stroke-width="2.4"/>`;
+ g3+=`<text x="${mX.toFixed(1)}" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#7c3aed">Median (${medP.toFixed(2)}%)</text>`;
+ g3+=`<text x="37" y="315" font-size="10.5" fill="#be123c" font-weight="600">Min (${diffs.at(0).toFixed(1)}% dr Mean)</text><text x="506" y="315" text-anchor="end" font-size="10.5" fill="#0284c7" font-weight="600">Max (+${diffs.at(29).toFixed(1)}% dr Mean)</text>`;
  S3.innerHTML=g3;
  L.textContent=`Skewness: ${disp>0?'+':''}${disp.toFixed(2)} (${disp>0.3?'Positive Skew':disp<-0.3?'Negative Skew':'Simetris'})`;
 }
