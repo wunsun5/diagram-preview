@@ -1,18 +1,17 @@
-<!DOCTYPE html><html><body style="margin:0;padding:8px;font-family:sans-serif;background:transparent;color:#1e293b;height:100vh;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
-<div style="flex:1;background:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 2px 10px #0001;display:flex;flex-direction:column;min-height:0">
-<div style="display:flex;gap:12px;flex:1;min-height:0">
- <div style="flex:1.1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;min-width:0">
-  <b style="font-size:12px;color:#0f172a">Performa Portofolio (Modal Awal Rp 100 Juta)</b>
+<!DOCTYPE html><html style="height:100%"><body style="margin:0;padding:6px;font-family:sans-serif;background:transparent;color:#1e293b;height:100%;box-sizing:border-box;display:flex;overflow:hidden">
+<div style="flex:1;background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 2px 8px #0001;display:flex;gap:10px;height:100%;box-sizing:border-box;overflow:hidden">
+ <div style="flex:1.1;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;min-width:0;height:100%;box-sizing:border-box">
+  <b style="font-size:11.5px;color:#0f172a;white-space:nowrap">Performa Portofolio (Modal Awal Rp 100 Juta)</b>
   <svg id="s1" viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
-  <div style="background:#f1f5f9;padding:8px 10px;border-radius:6px;text-align:center;margin-top:4px">
-   <b id="lbl" style="font-size:12px;color:#0f172a">Skewness: 0.00 (Simetris)</b>
-   <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:8px;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:11px;font-weight:600">Ubah Sampel</button>
-   <input id="sl" type="range" min="-5" max="5" step="0.1" value="0" style="width:94%;margin-top:6px;display:block;margin-inline:auto">
-   <div style="display:flex;justify-content:space-between;font-size:10px;width:94%;margin:2px auto 0;color:#475569">
+  <div style="background:#f1f5f9;padding:6px 8px;border-radius:5px;text-align:center;margin-top:4px;flex-shrink:0">
+   <b id="lbl" style="font-size:11.5px;color:#0f172a">Skewness: 0.00 (Simetris)</b>
+   <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:6px;padding:2px 7px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:10.5px;font-weight:600">Ubah Sampel</button>
+   <input id="sl" type="range" min="-5" max="5" step="0.1" value="0" style="width:94%;margin-top:4px;display:block;margin-inline:auto">
+   <div style="display:flex;justify-content:space-between;font-size:9.5px;width:94%;margin:1px auto 0;color:#475569">
     <span>-5.0 (Negative)</span><span>0.0 (Simetris)</span><span>+5.0 (Positive)</span></div></div></div>
- <div style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;min-width:0">
-  <b style="font-size:12px;color:#0f172a">Selisih Return Harian terhadap Mean (Terurut)</b>
-  <svg id="s3" viewBox="0 0 540 330" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg></div></div></div>
+ <div style="flex:1;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;min-width:0;height:100%;box-sizing:border-box">
+  <b style="font-size:11.5px;color:#0f172a;white-space:nowrap">Selisih Return Harian terhadap Mean (Terurut)</b>
+  <svg id="s3" viewBox="0 0 540 330" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg></div></div>
 <script>
 const G=id=>document.getElementById(id),S1=G('s1'),S3=G('s3'),SL=G('sl'),L=G('lbl');
 let seed=42;
