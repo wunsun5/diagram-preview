@@ -15,11 +15,11 @@
   <!-- DIAGRAM UTAMA -->
   <svg id="s1" viewBox="0 0 920 330" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
 
-  <!-- KONTROL SLIDER -->
+  <!-- KONTROL SLIDER (DEFAULT TEPAT DI 0.0) -->
   <div style="background:#f1f5f9;padding:5px 12px;border-radius:6px;text-align:center;margin-top:3px;flex-shrink:0;border:1px solid #e2e8f0">
-    <b id="lbl" style="font-size:12px;color:#0f172a">Excess Kurtosis: 0.00 (Normal)</b>
+    <b id="lbl" style="font-size:12px;color:#0f172a">Excess Kurtosis: 0.00 (Normal) | Ekstrem: 0 hari</b>
     <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:8px;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:11px;font-weight:600">Ubah Sampel</button>
-    <input id="sl" type="range" min="-1.2" max="12" step="0.2" value="6" style="width:92%;margin-top:4px;display:block;margin-inline:auto;cursor:pointer">
+    <input id="sl" type="range" min="-1.2" max="12" step="0.2" value="0" style="width:92%;margin-top:4px;display:block;margin-inline:auto;cursor:pointer">
     <div style="display:flex;justify-content:space-between;font-size:10px;width:92%;margin:1px auto 0;color:#475569;font-weight:600">
       <span>-1.2 (Ekor Tipis / Stabil)</span><span>0.0 (Normal)</span><span>+12.0 (Fat Tail Ekstrem)</span>
     </div>
@@ -34,7 +34,7 @@ const krt=a=>{let n=a.length,m=a.reduce((p,c)=>p+c,0)/n,s=Math.sqrt(a.reduce((p,
 function draw(sv){
   let old=seed,N=30,pos=new Array(),neg=new Array();
   for(let i=0;i<15;i++){
-    let z=0.35+Math.abs(Math.sqrt(-2*Math.log(Math.max(1e-6,rnd())))*Math.cos(2*Math.PI*rnd()))*0.85;
+    let z=0.45+Math.abs(Math.sqrt(-2*Math.log(Math.max(1e-6,rnd())))*Math.cos(2*Math.PI*rnd()))*0.75;
     pos.push({v:z,r:rnd()});
     neg.push({v:-z,r:rnd()});
   }
@@ -51,19 +51,24 @@ function draw(sv){
   }
   seed=old;
 
-  // Temukan indeks titik positif tertinggi dan negatif terdalam agar dorongan kurtosis tembus penuh s/d +12.0
   let maxPosIdx=0, minNegIdx=0;
   ord.forEach((v,i)=>{if(v>ord.at(maxPosIdx))maxPosIdx=i;if(v<ord.at(minNegIdx))minNegIdx=i;});
 
-  let lo=0.0,hi=120.0,best=ord.slice();
+  // Binary search penuh dari -1.2 sampai +12.0 agar slider tepat akurat
+  let best=ord.slice();
   if(sv<0){
-    let pwr=Math.max(0.1, 1+sv*0.75);
-    best=ord.map((z,i)=>Math.sign(z)*Math.pow(Math.abs(z),pwr)*(0.65+0.25*Math.sin(i*1.7)));
+    let lo=0.05,hi=1.2;
+    for(let it=0;it<60;it++){
+      let mid=(lo+hi)/2;
+      let cnd=ord.map((z,i)=>Math.sign(z)*Math.pow(Math.abs(z),mid)*(0.7+0.2*Math.sin(i*1.7)));
+      if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
+    }
   } else {
+    let lo=0.0,hi=120.0;
     for(let it=0;it<65;it++){
       let mid=(lo+hi)/2;
       let cnd=ord.map((z,i)=>{
-        let base=z*(0.65+0.25*Math.sin(i*1.7));
+        let base=z*(0.7+0.2*Math.sin(i*1.7));
         if(i===maxPosIdx) return base + mid;
         if(i===minNegIdx) return base - mid*0.85;
         return base;
@@ -75,7 +80,7 @@ function draw(sv){
   let mB=best.reduce((p,c)=>p+c,0)/N,sB=Math.sqrt(best.reduce((p,c)=>p+(c-mB)**2,0)/N)||1;
   let vol=0.017,meanRet=Math.log(1.2)/N;
   let devRets=best.map(r=>((r-mB)/sB)*vol);
-  let rets=devRets.map(d=>d+meanRet),ek=krt(rets),disp=Math.abs(ek)<0.02?0:ek;
+  let rets=devRets.map(d=>d+meanRet),ek=krt(rets),disp=Math.abs(ek)<0.03?0:ek;
 
   let pts=new Array({d:0,v:100}),cur=100,minV=95,maxV=125;
   for(let i=0;i<N;i++){
@@ -107,7 +112,8 @@ function draw(sv){
     let p0=cPts.at(Math.max(0,i-1)), p1=cPts.at(i), p2=cPts.at(i+1), p3=cPts.at(Math.min(N,i+2));
     let cp1x=p1.px+(p2.px-p0.px)*t/3, cp1y=p1.py+(p2.py-p0.py)*t/3;
     let cp2x=p2.px-(p3.px-p1.px)*t/3, cp2y=p2.py-(p3.py-p1.py)*t/3;
-    let isJump=Math.abs(devRets.at(i))>2*vol;
+    // Lonjakan ekstrem (Fat Tail) hanya aktif jika Excess Kurtosis > 0 dan melampaui 2.15x Realized Vol
+    let isJump=(disp>0.05) && (Math.abs(devRets.at(i))>2.15*vol);
     let pctJump=(Math.exp(rets.at(i))-1)*100;
     let isUp=pctJump>0;
     let segColor=isJump ? (isUp?'#16a34a':'#dc2626') : '#0f172a';
@@ -136,10 +142,10 @@ function draw(sv){
   g+=`<circle cx="${x(30)}" cy="${y(120)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
 
   S1.innerHTML=g;
-  let jenis=disp>0.5?'Fat Tail':disp<-0.4?'Ekor Tipis':'Normal';
+  let jenis=disp>0.3?'Fat Tail':disp<-0.3?'Ekor Tipis':'Normal';
   L.textContent=`Excess Kurtosis: ${disp>0?'+':''}${disp.toFixed(2)} (${jenis}) | Ekstrem: ${cntOut} hari`;
 }
-SL.oninput=()=>draw(+SL.value);draw(6);
+SL.oninput=()=>draw(+SL.value);draw(0);
 </script>
 </body>
 </html>
