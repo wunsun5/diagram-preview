@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html style="height:100%;margin:0;padding:0">
 <body style="margin:0;padding:0;font-family:'Segoe UI',Roboto,sans-serif;background:#fff;color:#1e293b;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
-<div style="flex:1;display:flex;flex-direction:column;padding:6px 10px;box-sizing:border-box;min-height:0">
-  <div style="text-align:center;font-weight:700;font-size:13.5px;color:#0f172a;margin-bottom:2px;flex-shrink:0">
-    Visualisasi Metrik Kurtosis: Deteksi Lompatan Harian Ekstrem (Fat Tail)
+<div style="flex:1;display:flex;flex-direction:column;padding:4px 10px 6px;box-sizing:border-box;min-height:0">
+  <!-- LEGENDA HORIZONTAL BERSIH DI ATAS DIAGRAM -->
+  <div style="display:flex;justify-content:center;align-items:center;gap:18px;flex-wrap:wrap;padding:4px 10px;margin-bottom:2px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;flex-shrink:0">
+    <span style="font-weight:700;color:#0369a1">Realized Vol Rata-rata: 1.70%/hari</span>
+    <span style="color:#cbd5e1">|</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="4,3"/></svg>Garis Tren Mean</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#0f172a" stroke-width="2.3"/></svg>Pergerakan Harian Normal</span>
+    <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#dc2626"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#dc2626" stroke-width="3.2"/></svg>Lompatan Harian Ekstrem</span>
   </div>
-  <svg id="s1" viewBox="0 0 920 340" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
-  <div style="background:#f1f5f9;padding:6px 12px;border-radius:6px;text-align:center;margin-top:4px;flex-shrink:0;border:1px solid #e2e8f0">
-    <b id="lbl" style="font-size:12px;color:#0f172a">Excess Kurtosis: 0.00 (Normal) | Realized Vol Rata-rata: 1.70%/hari</b>
+
+  <!-- DIAGRAM UTAMA -->
+  <svg id="s1" viewBox="0 0 920 330" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;min-height:0"></svg>
+
+  <!-- KONTROL SLIDER -->
+  <div style="background:#f1f5f9;padding:5px 12px;border-radius:6px;text-align:center;margin-top:3px;flex-shrink:0;border:1px solid #e2e8f0">
+    <b id="lbl" style="font-size:12px;color:#0f172a">Excess Kurtosis: 0.00 (Normal)</b>
     <button onclick="seed=Math.random()*9e4|0;draw(+SL.value)" style="margin-left:8px;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:11px;font-weight:600">Ubah Sampel</button>
     <input id="sl" type="range" min="-1.2" max="12" step="0.2" value="6" style="width:92%;margin-top:4px;display:block;margin-inline:auto;cursor:pointer">
     <div style="display:flex;justify-content:space-between;font-size:10px;width:92%;margin:1px auto 0;color:#475569;font-weight:600">
@@ -41,12 +50,17 @@ function draw(sv){
   }
   seed=old;
 
-  let lo=0.1,hi=8.0,best=ord.slice();
-  for(let it=0;it<60;it++){
+  // Perlebar pencarian agar slider terus bergerak dinamis dari -1.2 sampai +12.0 tanpa mentok
+  let lo=0.05,hi=80.0,best=ord.slice();
+  for(let it=0;it<65;it++){
     let mid=(lo+hi)/2;
     let cnd=ord.map((z,i)=>{
-      let baseWiggle=z*(0.65+0.25*Math.sin(i*1.7));
-      let tailBoost=Math.abs(z)>1.35 ? Math.sign(z)*Math.pow(Math.abs(z)-1.3, 1.5)*mid : 0;
+      let wiggle=0.65+0.25*Math.sin(i*1.7);
+      if(sv<0){
+        return Math.sign(z)*Math.pow(Math.abs(z), Math.max(0.15, 1+sv*0.7))*wiggle;
+      }
+      let baseWiggle=z*wiggle;
+      let tailBoost=Math.abs(z)>1.15 ? Math.sign(z)*Math.pow(Math.abs(z)-1.1, 1.8)*mid : 0;
       return baseWiggle+tailBoost;
     });
     if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
@@ -65,24 +79,22 @@ function draw(sv){
     pts.push({d:i+1,v:cur});
   }
 
-  const x=d=>80+(d/30)*810, y=v=>295-((v-minV)/(maxV-minV))*275;
+  const x=d=>80+(d/30)*810, y=v=>285-((v-minV)/(maxV-minV))*265;
   let g='';
   for(let v=minV;v<=maxV;v+=5){
     g+=`<line x1="80" y1="${y(v)}" x2="890" y2="${y(v)}" stroke="#e2e8f0" stroke-width="1"/>`;
     g+=`<text x="72" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#334155">Rp ${v}Jt</text>`;
   }
   for(let d=0;d<=30;d+=5){
-    g+=`<line x1="${x(d)}" y1="20" x2="${x(d)}" y2="295" stroke="#e2e8f0" stroke-width="1"/>`;
-    g+=`<text x="${x(d)}" y="314" text-anchor="middle" font-size="11" fill="#334155">Hari ${d}</text>`;
+    g+=`<line x1="${x(d)}" y1="20" x2="${x(d)}" y2="285" stroke="#e2e8f0" stroke-width="1"/>`;
+    g+=`<text x="${x(d)}" y="304" text-anchor="middle" font-size="11" fill="#334155">Hari ${d}</text>`;
   }
-  g+=`<text x="22" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" transform="rotate(-90 22 160)">Nilai Portofolio (Juta Rp)</text>`;
-  g+=`<text x="485" y="334" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Periode Waktu (Hari)</text>`;
+  g+=`<text x="22" y="155" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155" transform="rotate(-90 22 155)">Nilai Portofolio (Juta Rp)</text>`;
+  g+=`<text x="485" y="324" text-anchor="middle" font-size="11" font-weight="bold" fill="#334155">Periode Waktu (Hari)</text>`;
 
-  // Sumbu Utama & Garis Tren Mean
-  g+=`<line x1="80" y1="20" x2="80" y2="295" stroke="#334155" stroke-width="1.3"/><line x1="80" y1="295" x2="890" y2="295" stroke="#334155" stroke-width="1.3"/>`;
+  g+=`<line x1="80" y1="20" x2="80" y2="285" stroke="#334155" stroke-width="1.3"/><line x1="80" y1="285" x2="890" y2="285" stroke="#334155" stroke-width="1.3"/>`;
   g+=`<line x1="${x(0)}" y1="${y(100)}" x2="${x(30)}" y2="${y(120)}" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="7,4"/>`;
 
-  // Kurva pergerakan harian + Pengukur Lonjakan/Penurunan pada garis merah
   let cPts=pts.map(p=>({px:x(p.d),py:y(p.v)}));
   let cntOut=0, t=0.45, rulers='';
   for(let i=0;i<N;i++){
@@ -96,18 +108,18 @@ function draw(sv){
       let pctJump=(Math.exp(rets.at(i))-1)*100;
       let isUp=pctJump>0;
       let labelTxt=`${isUp?'▲ +':'▼ '}${pctJump.toFixed(2)}%`;
+      let bColor=isUp?'#16a34a':'#dc2626';
+      let bgColor=isUp?'#f0fdf4':'#fef2f2';
 
-      // Garis siku pengukur tinggi lonjakan/penurunan dari titik awal ke titik akhir lompatan
       let rx=p2.px+5;
-      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2"/>`;
-      rulers+=`<line x1="${rx.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="#dc2626" stroke-width="1.5"/>`;
-      rulers+=`<line x1="${p2.px.toFixed(1)}" y1="${p2.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2"/>`;
+      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="${bColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
+      rulers+=`<line x1="${rx.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${bColor}" stroke-width="1.5"/>`;
+      rulers+=`<line x1="${p2.px.toFixed(1)}" y1="${p2.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${bColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
 
-      // Lencana persentase lonjakan/penurunan
       let bx=Math.max(88, Math.min(805, rx+4));
-      let by=Math.max(24, Math.min(272, (p1.py+p2.py)/2 - 9));
-      rulers+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="74" height="18" rx="4" fill="#fef2f2" stroke="#dc2626" stroke-width="1.1"/>`;
-      rulers+=`<text x="${(bx+37).toFixed(1)}" y="${(by+12.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#dc2626">${labelTxt}</text>`;
+      let by=Math.max(22, Math.min(264, (p1.py+p2.py)/2 - 9));
+      rulers+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="74" height="18" rx="4" fill="${bgColor}" stroke="${bColor}" stroke-width="1.1"/>`;
+      rulers+=`<text x="${(bx+37).toFixed(1)}" y="${(by+12.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${bColor}">${labelTxt}</text>`;
       rulers+=`<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="3.2" fill="#dc2626"/><circle cx="${p2.px.toFixed(1)}" cy="${p2.py.toFixed(1)}" r="3.2" fill="#dc2626"/>`;
     }
     g+=`<path d="M ${p1.px.toFixed(1)} ${p1.py.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.px.toFixed(1)} ${p2.py.toFixed(1)}" fill="none" stroke="${isJump?'#dc2626':'#0f172a'}" stroke-width="${isJump?'3.5':'2.3'}" stroke-linecap="round"/>`;
@@ -117,17 +129,9 @@ function draw(sv){
   g+=`<circle cx="${x(0)}" cy="${y(100)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
   g+=`<circle cx="${x(30)}" cy="${y(120)}" r="4.8" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>`;
 
-  // Kotak Keterangan Realized Volatility & Legenda (Tanpa Blok Latar)
-  let volPct=(vol*100).toFixed(2), limPct=(2*vol*100).toFixed(2);
-  g+=`<rect x="92" y="26" width="355" height="82" rx="6" fill="#ffffff" fill-opacity="0.95" stroke="#cbd5e1" stroke-width="1"/>`;
-  g+=`<text x="102" y="41" font-size="10.5" font-weight="bold" fill="#0369a1">Realized Vol Rata-rata: ${volPct}% / hari (Batas Ekstrem &gt; &plusmn;${limPct}%)</text>`;
-  g+=`<line x1="102" y1="55" x2="120" y2="55" stroke="#2e8b57" stroke-width="2" stroke-dasharray="5,3"/><text x="126" y="58" font-size="10.5" fill="#1e293b">Garis Tren Mean Log Return (+0.61%/hari)</text>`;
-  g+=`<line x1="102" y1="72" x2="120" y2="72" stroke="#0f172a" stroke-width="2.2"/><text x="126" y="75" font-size="10.5" fill="#1e293b">Pergerakan Harian Normal (&le; &plusmn;${limPct}%)</text>`;
-  g+=`<line x1="102" y1="89" x2="120" y2="89" stroke="#dc2626" stroke-width="3.2"/><text x="126" y="92" font-size="10.5" fill="#dc2626" font-weight="600">Lompatan Harian Ekstrem (&gt; &plusmn;${limPct}%) + Pengukur %</text>`;
-
   S1.innerHTML=g;
   let jenis=disp>0.5?'Fat Tail':disp<-0.4?'Ekor Tipis':'Normal';
-  L.textContent=`Excess Kurtosis: ${disp>0?'+':''}${disp.toFixed(2)} (${jenis}) | Realized Vol Rata-rata: ${volPct}%/hari | Ekstrem: ${cntOut} hari`;
+  L.textContent=`Excess Kurtosis: ${disp>0?'+':''}${disp.toFixed(2)} (${jenis}) | Ekstrem: ${cntOut} hari`;
 }
 SL.oninput=()=>draw(+SL.value);draw(6);
 </script>
