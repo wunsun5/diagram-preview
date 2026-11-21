@@ -3,12 +3,13 @@
 <body style="margin:0;padding:0;font-family:'Segoe UI',Roboto,sans-serif;background:#fff;color:#1e293b;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
 <div style="flex:1;display:flex;flex-direction:column;padding:4px 10px 6px;box-sizing:border-box;min-height:0">
   <!-- LEGENDA HORIZONTAL BERSIH DI ATAS DIAGRAM -->
-  <div style="display:flex;justify-content:center;align-items:center;gap:18px;flex-wrap:wrap;padding:4px 10px;margin-bottom:2px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;flex-shrink:0">
+  <div style="display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;padding:4px 10px;margin-bottom:2px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;flex-shrink:0">
     <span style="font-weight:700;color:#0369a1">Realized Vol Rata-rata: 1.70%/hari</span>
     <span style="color:#cbd5e1">|</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="4,3"/></svg>Garis Tren Mean</span>
-    <span style="display:inline-flex;align-items:center;gap:6px"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#0f172a" stroke-width="2.3"/></svg>Pergerakan Harian Normal</span>
-    <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#dc2626"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#dc2626" stroke-width="3.2"/></svg>Lompatan Harian Ekstrem</span>
+    <span style="display:inline-flex;align-items:center;gap:5px"><svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#2e8b57" stroke-width="2.2" stroke-dasharray="4,3"/></svg>Garis Tren Mean</span>
+    <span style="display:inline-flex;align-items:center;gap:5px"><svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#0f172a" stroke-width="2.3"/></svg>Pergerakan Normal</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;font-weight:600;color:#16a34a"><svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#16a34a" stroke-width="3.2"/></svg>Lonjakan Naik Ekstrem</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;font-weight:600;color:#dc2626"><svg width="20" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#dc2626" stroke-width="3.2"/></svg>Penurunan Ekstrem</span>
   </div>
 
   <!-- DIAGRAM UTAMA -->
@@ -50,20 +51,25 @@ function draw(sv){
   }
   seed=old;
 
-  // Perlebar pencarian agar slider terus bergerak dinamis dari -1.2 sampai +12.0 tanpa mentok
-  let lo=0.05,hi=80.0,best=ord.slice();
-  for(let it=0;it<65;it++){
-    let mid=(lo+hi)/2;
-    let cnd=ord.map((z,i)=>{
-      let wiggle=0.65+0.25*Math.sin(i*1.7);
-      if(sv<0){
-        return Math.sign(z)*Math.pow(Math.abs(z), Math.max(0.15, 1+sv*0.7))*wiggle;
-      }
-      let baseWiggle=z*wiggle;
-      let tailBoost=Math.abs(z)>1.15 ? Math.sign(z)*Math.pow(Math.abs(z)-1.1, 1.8)*mid : 0;
-      return baseWiggle+tailBoost;
-    });
-    if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
+  // Temukan indeks titik positif tertinggi dan negatif terdalam agar dorongan kurtosis tembus penuh s/d +12.0
+  let maxPosIdx=0, minNegIdx=0;
+  ord.forEach((v,i)=>{if(v>ord.at(maxPosIdx))maxPosIdx=i;if(v<ord.at(minNegIdx))minNegIdx=i;});
+
+  let lo=0.0,hi=120.0,best=ord.slice();
+  if(sv<0){
+    let pwr=Math.max(0.1, 1+sv*0.75);
+    best=ord.map((z,i)=>Math.sign(z)*Math.pow(Math.abs(z),pwr)*(0.65+0.25*Math.sin(i*1.7)));
+  } else {
+    for(let it=0;it<65;it++){
+      let mid=(lo+hi)/2;
+      let cnd=ord.map((z,i)=>{
+        let base=z*(0.65+0.25*Math.sin(i*1.7));
+        if(i===maxPosIdx) return base + mid;
+        if(i===minNegIdx) return base - mid*0.85;
+        return base;
+      });
+      if(krt(cnd)<sv)lo=mid;else hi=mid;best=cnd;
+    }
   }
 
   let mB=best.reduce((p,c)=>p+c,0)/N,sB=Math.sqrt(best.reduce((p,c)=>p+(c-mB)**2,0)/N)||1;
@@ -102,27 +108,27 @@ function draw(sv){
     let cp1x=p1.px+(p2.px-p0.px)*t/3, cp1y=p1.py+(p2.py-p0.py)*t/3;
     let cp2x=p2.px-(p3.px-p1.px)*t/3, cp2y=p2.py-(p3.py-p1.py)*t/3;
     let isJump=Math.abs(devRets.at(i))>2*vol;
+    let pctJump=(Math.exp(rets.at(i))-1)*100;
+    let isUp=pctJump>0;
+    let segColor=isJump ? (isUp?'#16a34a':'#dc2626') : '#0f172a';
 
     if(isJump){
       cntOut++;
-      let pctJump=(Math.exp(rets.at(i))-1)*100;
-      let isUp=pctJump>0;
       let labelTxt=`${isUp?'▲ +':'▼ '}${pctJump.toFixed(2)}%`;
-      let bColor=isUp?'#16a34a':'#dc2626';
       let bgColor=isUp?'#f0fdf4':'#fef2f2';
 
       let rx=p2.px+5;
-      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="${bColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
-      rulers+=`<line x1="${rx.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${bColor}" stroke-width="1.5"/>`;
-      rulers+=`<line x1="${p2.px.toFixed(1)}" y1="${p2.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${bColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
+      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="${segColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
+      rulers+=`<line x1="${rx.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${segColor}" stroke-width="1.5"/>`;
+      rulers+=`<line x1="${p2.px.toFixed(1)}" y1="${p2.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${segColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
 
       let bx=Math.max(88, Math.min(805, rx+4));
       let by=Math.max(22, Math.min(264, (p1.py+p2.py)/2 - 9));
-      rulers+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="74" height="18" rx="4" fill="${bgColor}" stroke="${bColor}" stroke-width="1.1"/>`;
-      rulers+=`<text x="${(bx+37).toFixed(1)}" y="${(by+12.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${bColor}">${labelTxt}</text>`;
-      rulers+=`<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="3.2" fill="#dc2626"/><circle cx="${p2.px.toFixed(1)}" cy="${p2.py.toFixed(1)}" r="3.2" fill="#dc2626"/>`;
+      rulers+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="74" height="18" rx="4" fill="${bgColor}" stroke="${segColor}" stroke-width="1.1"/>`;
+      rulers+=`<text x="${(bx+37).toFixed(1)}" y="${(by+12.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="${segColor}">${labelTxt}</text>`;
+      rulers+=`<circle cx="${p1.px.toFixed(1)}" cy="${p1.py.toFixed(1)}" r="3.2" fill="${segColor}"/><circle cx="${p2.px.toFixed(1)}" cy="${p2.py.toFixed(1)}" r="3.2" fill="${segColor}"/>`;
     }
-    g+=`<path d="M ${p1.px.toFixed(1)} ${p1.py.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.px.toFixed(1)} ${p2.py.toFixed(1)}" fill="none" stroke="${isJump?'#dc2626':'#0f172a'}" stroke-width="${isJump?'3.5':'2.3'}" stroke-linecap="round"/>`;
+    g+=`<path d="M ${p1.px.toFixed(1)} ${p1.py.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.px.toFixed(1)} ${p2.py.toFixed(1)}" fill="none" stroke="${segColor}" stroke-width="${isJump?'3.5':'2.3'}" stroke-linecap="round"/>`;
   }
 
   g+=rulers;
