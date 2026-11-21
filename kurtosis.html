@@ -124,7 +124,7 @@ function draw(sv){
       let bgColor=isUp?'#f0fdf4':'#fef2f2';
 
       let rx=p2.px+5;
-      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="${segColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
+      rulers+=`<line x1="${p1.px.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p1.py.toFixed(1)}" stroke="${segColor}" stroke-width="1" stroke-dasharray="2,2"/>`; 
       rulers+=`<line x1="${rx.toFixed(1)}" y1="${p1.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${segColor}" stroke-width="1.5"/>`;
       rulers+=`<line x1="${p2.px.toFixed(1)}" y1="${p2.py.toFixed(1)}" x2="${rx.toFixed(1)}" y2="${p2.py.toFixed(1)}" stroke="${segColor}" stroke-width="1" stroke-dasharray="2,2"/>`;
 
